@@ -1247,8 +1247,10 @@
                         });
                         
                         // فحص فوري لمحافظة كربلاء وعرض التحذير (إلا إذا تم تجاهل الفحص)
-                        if (!window.skipKarbalaCheck && checkIfKarbala(orderData.recipient_area)) {
+                        const areaToCheck = orderData.recipient_area || orderData.governorate || orderData.area;
+                        if (!window.skipKarbalaCheck && checkIfKarbala(areaToCheck)) {
                             console.log('⚠️ تم اكتشاف طلب من كربلاء - عرض تحذير فوري');
+                            console.log('📍 المنطقة المكتشفة:', areaToCheck);
                             closeModal();
                             showKarbalaSimpleWarning(orderData, resumeScanning);
                             return; // إيقاف المعالجة وانتظار قرار المستخدم
@@ -1474,7 +1476,9 @@
                 closeModal();
                 if (resumeScanning) {
                     console.log('🔄 استمرار المسح تلقائياً بعد طلب مكرر...');
-                    startScanning();
+                    isScanning = true;
+                    processFrame();
+                    updateStatus('جاهز للمسح', 'ready');
                 }
             }, 3000);
             
@@ -1861,9 +1865,14 @@
             const areaLower = area.toLowerCase().trim();
             const karbalaKeywords = ['كربلاء', 'karbala', 'كرب', 'المقدسة'];
             
-            return karbalaKeywords.some(keyword => 
+            console.log('🔍 فحص كربلاء:', { area: area, areaLower: areaLower });
+            
+            const isKarbala = karbalaKeywords.some(keyword => 
                 areaLower.includes(keyword.toLowerCase())
             );
+            
+            console.log('📍 نتيجة فحص كربلاء:', isKarbala);
+            return isKarbala;
         }
         
         /**
@@ -1913,7 +1922,7 @@
                         رقم الوصل: <span style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 6px;">${orderData.wasl_number}</span>
                     </p>
                     <p style="font-size: 15px; color: white; margin: 10px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
-                        المحافظة: <span style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 6px;">${orderData.recipient_area}</span>
+                        المحافظة: <span style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 6px;">${orderData.recipient_area || orderData.governorate || orderData.area || 'غير محدد'}</span>
                     </p>
                     <p style="font-size: 14px; color: white; margin-top: 15px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
                         يرجى التعامل بحذر خاص مع هذا الطلب
@@ -2831,9 +2840,10 @@
             if (modal.dataset.resumeScanning === 'true') {
                 modal.dataset.resumeScanning = 'false';
                 if (!isScanning && currentStream) {
+                    console.log('🔄 استئناف المسح بعد إغلاق النافذة...');
                     isScanning = true;
                     processFrame();
-                    updateStatus('جارِ البحث عن باركود...', 'scanning');
+                    updateStatus('جاهز للمسح', 'ready');
                 }
             }
         }
