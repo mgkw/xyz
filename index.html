@@ -442,7 +442,7 @@
         <button id="cameraBtn" class="btn btn-camera">🔄 تبديل الكاميرا</button>
         <button id="torchBtn" class="btn btn-torch">🔦 الفلاش</button>
         <button id="manualBtn" class="btn btn-camera">✏️ إدخال يدوي</button>
-        <button id="testBtn" class="btn btn-camera">🧪 اختبار</button>
+
     </div>
     
     <!-- النافذة المنبثقة للنتائج -->
@@ -737,33 +737,7 @@
             }
         }
         
-        /**
-         * عرض قائمة الاختبارات
-         */
-        function showTestMenu() {
-            showModal('قائمة الاختبارات 🧪', `
-                <div class="order-details">
-                    <h3>🧪 اختبارات النظام</h3>
-                    <p>اختر نوع الاختبار الذي تريد تشغيله:</p>
-                    <br>
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <button onclick="showTestOrderDialog()" class="btn" style="background: #28a745; color: white; width: 100%;">
-                            🚀 اختبار طلب محدد (97710)
-                        </button>
-                        <button onclick="testQRDetection()" class="btn btn-camera" style="width: 100%;">
-                            📱 اختبار مسح QR وهمي
-                        </button>
-                        <button onclick="runDiagnostics()" class="btn" style="background: #6c757d; color: white; width: 100%;">
-                            🔧 تشخيص شامل للنظام
-                        </button>
-                    </div>
-                    <br>
-                    <div style="text-align: center;">
-                        <button onclick="closeModal()" class="btn btn-primary">إغلاق</button>
-                    </div>
-                </div>
-            `);
-        }
+
         
         /**
          * تشغيل تشخيص شامل للنظام
@@ -904,94 +878,11 @@
             return suggestions.join('');
         }
         
-        /**
-         * اختبار اكتشاف QR مع بيانات وهمية
-         */
-        function testQRDetection() {
-            console.log('🧪 اختبار اكتشاف QR');
-            
-            // محاكاة QR code مكتشف
-            const testCode = {
-                data: '001234567890',
-                location: [
-                    { x: 100, y: 100 },
-                    { x: 200, y: 100 },
-                    { x: 200, y: 200 },
-                    { x: 100, y: 200 }
-                ]
-            };
-            
-            handleQRDetected(testCode);
-        }
+
         
-        /**
-         * عرض نافذة اختبار طلب محدد
-         */
-        function showTestOrderDialog() {
-            showModal('اختبار طلب محدد 🧪', `
-                <div class="order-details">
-                    <h3>🧪 اختبار طلب محدد</h3>
-                    <p>أدخل رقم الوصل لاختبار النظام الجديد:</p>
-                    <br>
-                    <input type="text" id="testWaslNumber" value="97716" 
-                           placeholder="أدخل رقم الوصل" 
-                           style="width: 100%; padding: 12px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; text-align: center; direction: ltr;"
-                           maxlength="20">
-                    <br><br>
-                    <div style="text-align: center;">
-                        <button onclick="processTestOrder()" class="btn" style="background: #28a745; color: white;">🚀 اختبار الطلب</button>
-                        <button onclick="closeModal()" class="btn btn-camera">إلغاء</button>
-                    </div>
-                    <br>
-                    <div style="background: #e3f2fd; padding: 10px; border-radius: 8px; font-size: 14px;">
-                        <strong>ملاحظة:</strong> سيتم اختبار النظام الجديد الذي يقوم بطلب واحد موحد لتجنب مشكلة "غير موجود" بعد التأكيد.
-                    </div>
-                </div>
-            `);
-            
-            // التركيز على حقل الإدخال
-            setTimeout(() => {
-                const input = document.getElementById('testWaslNumber');
-                if (input) {
-                    input.focus();
-                    input.select();
-                }
-            }, 100);
-        }
+
         
-        /**
-         * معالجة اختبار الطلب
-         */
-        function processTestOrder() {
-            const input = document.getElementById('testWaslNumber');
-            if (!input) return;
-            
-            const waslNumber = input.value.trim();
-            if (!waslNumber) {
-                alert('يرجى إدخال رقم الوصل');
-                return;
-            }
-            
-            console.log('🧪 اختبار طلب محدد:', waslNumber);
-            
-            // إغلاق النافذة
-            closeModal();
-            
-            // إيقاف المسح إذا كان يعمل
-            const wasScanning = isScanning;
-            if (wasScanning) {
-                isScanning = false;
-                if (animationId) {
-                    cancelAnimationFrame(animationId);
-                    animationId = null;
-                }
-            }
-            
-            updateStatus('جارِ اختبار الطلب...', 'processing');
-            
-            // بدء عملية التحليل
-            analyzeWasl(waslNumber, wasScanning);
-        }
+
         
         /**
          * معالجة إطار الفيديو والبحث عن QR Code
@@ -1211,7 +1102,9 @@
         async function analyzeWasl(waslNumber, resumeScanning = true) {
             console.log('🔬 بدء تحليل الوصل:', waslNumber);
             
-            showModal('جارِ التحليل والتأكيد...', `
+
+            
+            showModal('🔬 جارِ التحليل والتأكيد...', `
                 <div class="loading">
                     <div class="spinner"></div>
                     <p>جارِ تحليل وتأكيد رقم الوصل: <strong>${waslNumber}</strong></p>
@@ -1237,14 +1130,46 @@
                             wasl_number: waslNumber,
                             order_id: searchResult.data?.order_id || searchResult.data?.id,
                             sender: searchResult.data?.sender || searchResult.data?.sender_name,
-                            recipient_phone: searchResult.data?.recipient_phone || searchResult.data?.phone,
-                            recipient_area: searchResult.data?.recipient_area || searchResult.data?.area || searchResult.data?.city,
-                            total_amount: searchResult.data?.total_amount || searchResult.data?.amount || searchResult.data?.price,
+                            
+                            // استخراج معلومات المستلم من JSON
+                            recipient_phone: searchResult.data?.recipient_phone || searchResult.data?.phone || 
+                                           searchResult.data?.receiver_phone || 'غير محدد',
+                            recipient_area: searchResult.data?.recipient_area || searchResult.data?.area || 
+                                          searchResult.data?.city || searchResult.data?.receiver_area || 
+                                          searchResult.data?.governorate || 'غير محدد',
+                            recipient_name: searchResult.data?.recipient_name || searchResult.data?.receiver_name || 'غير محدد',
+                            
+                            // معلومات المبالغ
+                            total_amount: searchResult.data?.total_amount || searchResult.data?.amount || 
+                                        searchResult.data?.price || '0',
+                            delivery_fee: searchResult.data?.delivery_fee || 'غير محدد',
+                            net_amount: searchResult.data?.net_amount || 'غير محدد',
+                            
+                            // تحليل حالة الطلب من JSON
                             duplicate: searchResult.data?.duplicate || searchResult.data?.is_duplicate || false,
-                            is_duplicate: searchResult.data?.duplicate || searchResult.data?.is_duplicate || false
+                            is_duplicate: searchResult.data?.duplicate || searchResult.data?.is_duplicate || false,
+                            duplicate_type: searchResult.data?.duplicate_type,
+                            auto_confirmed: searchResult.data?.auto_confirmed || false,
+                            confirmed_at: searchResult.data?.confirmed_at,
+                            can_confirm: searchResult.data?.can_confirm,
+                            status: searchResult.data?.status,
+                            
+                            // معلومات إضافية للتحليل
+                            governorate: searchResult.data?.governorate,
+                            source: searchResult.data?.source,
+                            
+                            // إحصائيات البحث
+                            search_stats: searchResult.data?.search_stats
                         };
                         searchSuccess = true;
                         console.log('✅ تم العثور على الطلب في البحث');
+                        console.log('📋 تفاصيل الطلب:', {
+                            duplicate: orderData.is_duplicate,
+                            duplicate_type: orderData.duplicate_type,
+                            auto_confirmed: orderData.auto_confirmed,
+                            can_confirm: orderData.can_confirm,
+                            status: orderData.status
+                        });
                     }
                 } catch (searchError) {
                     console.warn('⚠️ فشل البحث، سيتم المحاولة مع التأكيد مباشرة:', searchError.message);
@@ -1270,8 +1195,10 @@
                 console.log('✅ نتيجة التأكيد:', confirmResult);
                 
                 if (confirmResult.success) {
-                    // نجح التأكيد - استخدم البيانات من البحث إذا كانت متوفرة
-                    // أو استخرج البيانات من نتيجة التأكيد
+                    // نجح التأكيد الجديد - هذا طلب تم تأكيده الآن لأول مرة
+                    console.log('✅ تأكيد جديد ناجح - سيتم الإرسال لتيليجرام');
+                    
+                    // استخدم البيانات من البحث إذا كانت متوفرة أو من نتيجة التأكيد
                     if (!orderData) {
                         orderData = {
                             wasl_number: waslNumber,
@@ -1285,6 +1212,9 @@
                         };
                     }
                     
+                    // تحديد أنه تأكيد جديد
+                    orderData.newConfirmation = true;
+                    
                     // فحص إذا كانت المحافظة كربلاء
                     if (checkIfKarbala(orderData.recipient_area)) {
                         // إلغاء النافذة الحالية وعرض تحذير كربلاء
@@ -1294,7 +1224,7 @@
                     }
                     
                     // التأكيد نجح - التقاط صورة وإرسال لتيليجرام
-                    console.log('📸 التقاط صورة وإرسال لتيليجرام...');
+                    console.log('📸 تأكيد جديد - التقاط صورة وإرسال لتيليجرام...');
                     const imageBlob = await captureFrameAsBlob();
                     await sendToTelegram(waslNumber, orderData, imageBlob);
                     
@@ -1305,6 +1235,30 @@
                 } else {
                     // فشل التأكيد - تحليل سبب الفشل
                     console.log('⚠️ فشل التأكيد:', confirmResult);
+                    
+                    // فحص إذا كان الطلب تم تأكيده تلقائياً (من البحث)
+                    if (orderData && orderData.auto_confirmed && searchSuccess) {
+                        console.log('⚡ تأكيد تلقائي ناجح - سيتم الإرسال لتيليجرام');
+                        
+                        // تحديد أنه تأكيد تلقائي ناجح
+                        orderData.autoConfirmationSuccess = true;
+                        
+                        // فحص إذا كانت المحافظة كربلاء
+                        if (checkIfKarbala(orderData.recipient_area || orderData.governorate)) {
+                            closeModal();
+                            handleKarbalaWarning(orderData, resumeScanning, true);
+                            return;
+                        }
+                        
+                        // تأكيد تلقائي ناجح - إرسال لتيليجرام
+                        console.log('📸 تأكيد تلقائي ناجح - التقاط صورة وإرسال لتيليجرام...');
+                        const imageBlob = await captureFrameAsBlob();
+                        await sendToTelegram(waslNumber, orderData, imageBlob);
+                        
+                        // عرض رسالة النجاح للتأكيد التلقائي
+                        showAutoConfirmationSuccess(orderData, resumeScanning);
+                        return;
+                    }
                     
                     if (confirmResult.message && (
                         confirmResult.message.includes('مكرر') || 
@@ -1397,19 +1351,38 @@
          * التعامل مع الطلبات المكررة
          */
         function handleDuplicateOrder(orderData, resumeScanning) {
-            console.log('⚠️ طلب مكرر تم اكتشافه');
+            console.log('⚠️ طلب مكرر تم اكتشافه - لن يتم الإرسال');
+            
+            const successTitle = '🔄 طلب مكرر';
+            const continueText = 'استمرار المسح خلال 3 ثوان...';
             
             const detailsHtml = formatOrderDetails(orderData);
             
-            showModal('طلب مكرر! ⚠️', `
+            showModal(successTitle, `
                 <div class="warning-message">
                     <h3>🔄 هذا الطلب مكرر</h3>
                     <p>تم تأكيد هذا الطلب مسبقاً. لا يمكن تأكيده مرة أخرى.</p>
-                    <p><strong>استمرار المسح خلال 3 ثوان...</strong></p>
+                    <p><strong>❌ لم يتم الإرسال لتيليجرام</strong></p>
+                    <p><em>يتم الإرسال فقط للطلبات المؤكدة حديثاً</em></p>
+                    <p><strong>${continueText}</strong></p>
                 </div>
+                
                 ${detailsHtml}
+                
+                <div class="order-details">
+                    <h3>📊 تحليل الحالة</h3>
+                    <div class="detail-row">
+                        <span class="detail-label">حالة الطلب:</span>
+                        <span class="detail-value">🔄 مكرر</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">الإرسال لتيليجرام:</span>
+                        <span class="detail-value">❌ مُلغى (طلب مكرر)</span>
+                    </div>
+                </div>
+                
                 <div style="text-align: center; margin-top: 20px;">
-                    <button onclick="closeModal()" class="btn btn-primary">متابعة الآن</button>
+                    <button onclick="closeModal()" class="btn btn-primary">متابعة</button>
                 </div>
             `);
             
@@ -1427,39 +1400,73 @@
         }
         
         /**
-         * التعامل مع الطلبات المؤكدة مسبقاً (إرسال تلقائي)
+         * التعامل مع الطلبات المؤكدة مسبقاً (عرض فقط - بدون إرسال)
          */
         async function handleAlreadyConfirmedOrder(waslNumber, orderData, resumeScanning) {
-            console.log('✅ طلب مؤكد مسبقاً - إرسال تلقائي:', waslNumber);
+            console.log('📋 طلب مؤكد مسبقاً - عرض المعلومات فقط (بدون إرسال):', waslNumber);
             
-            try {
-                // عرض رسالة الإرسال التلقائي
-                showModal('إرسال تلقائي... 📤', `
-                    <div class="loading">
-                        <div class="spinner"></div>
-                        <p><strong>طلب مؤكد مسبقاً - إرسال تلقائي</strong></p>
-                        <p>رقم الوصل: <strong>${waslNumber}</strong></p>
-                        <p>جارِ إرسال المرجع لتيليجرام...</p>
+            // تحديد وضع التشغيل
+            const isTestMode = window.isTestMode || false;
+            const modeIcon = isTestMode ? '🧪' : '📋';
+            const modeText = isTestMode ? 'وضع الاختبار' : 'مسح فعلي';
+            
+            // تحليل نوع الطلب المؤكد مسبقاً
+            let orderStatus = 'مؤكد مسبقاً';
+            let statusIcon = '🗂️';
+            let statusMessage = 'هذا مرجع لطلب تم تأكيده مسبقاً - للمراجعة فقط';
+            
+            // فحص إذا كان مكرر
+            if (orderData.is_duplicate || orderData.duplicate) {
+                orderStatus = 'طلب مكرر';
+                statusIcon = '🔄';
+                statusMessage = 'هذا طلب مكرر تم تأكيده مسبقاً';
+            }
+            
+            // فحص إذا كان تأكيد تلقائي
+            if (orderData.auto_confirmed) {
+                orderStatus = 'تأكيد تلقائي';
+                statusIcon = '⚡';
+                statusMessage = 'تم تأكيد هذا الطلب تلقائياً من قبل النظام';
+            }
+            
+            const successTitle = isTestMode ? '🧪 اختبار مكتمل!' : `${statusIcon} ${orderStatus}`;
+            const continueText = isTestMode ? 'انتهى الاختبار' : 'استمرار المسح خلال 3 ثوان...';
+            
+            showModal(successTitle, `
+                <div class="info-message">
+                    <h3>${statusIcon} ${orderStatus}</h3>
+
+                    <p>${statusMessage}</p>
+                    <p><strong>❌ لم يتم الإرسال لتيليجرام</strong></p>
+                    <p><em>يتم الإرسال فقط للطلبات المؤكدة حديثاً</em></p>
+                    <p><strong>${continueText}</strong></p>
+                </div>
+                
+                ${formatOrderDetails(orderData)}
+                
+                <div class="order-details">
+                    <h3>📊 تحليل الحالة</h3>
+                    <div class="detail-row">
+                        <span class="detail-label">حالة البحث:</span>
+                        <span class="detail-value">✅ موجود في الأرشيف</span>
                     </div>
-                `);
-                
-                // إرسال تلقائي لتيليجرام مع تحديد أنه طلب مؤكد مسبقاً
-                const modifiedOrderData = { ...orderData, alreadyConfirmed: true };
-                const imageBlob = await captureFrameAsBlob();
-                await sendToTelegram(waslNumber, modifiedOrderData, imageBlob);
-                
-                // عرض رسالة نجاح سريعة ثم متابعة المسح
-                showModal('تم الإرسال! ✅', `
-                    <div class="success-message">
-                        <h3>📋 تم إرسال المرجع لتيليجرام</h3>
-                        <p>رقم الوصل: <strong>${waslNumber}</strong></p>
-                        <p>الطلب كان مؤكداً مسبقاً - تم إرسال مرجع للمراجعة</p>
-                        <p><strong>استمرار المسح خلال 3 ثوان...</strong></p>
+                    <div class="detail-row">
+                        <span class="detail-label">حالة التأكيد:</span>
+                        <span class="detail-value">${statusIcon} ${orderStatus}</span>
                     </div>
-                    ${formatOrderDetails(orderData)}
-                `);
+                    <div class="detail-row">
+                        <span class="detail-label">الإرسال لتيليجرام:</span>
+                        <span class="detail-value">❌ مُلغى (طلب قديم)</span>
+                    </div>
+                </div>
                 
-                // إغلاق النافذة تلقائياً بعد 3 ثوان ومتابعة المسح
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="closeModal()" class="btn btn-primary">متابعة</button>
+                </div>
+            `);
+            
+            // إغلاق النافذة تلقائياً بعد 3 ثوان ومتابعة المسح (إلا في وضع الاختبار)
+            if (!isTestMode) {
                 setTimeout(() => {
                     closeModal();
                     if (resumeScanning) {
@@ -1467,33 +1474,10 @@
                         startScanning();
                     }
                 }, 3000);
-                
-            } catch (error) {
-                console.error('❌ خطأ في الإرسال التلقائي:', error);
-                
-                // عرض خطأ مع خيار إعادة المحاولة
-                showModal('خطأ في الإرسال ❌', `
-                    <div class="error-message">
-                        <h3>❌ فشل الإرسال التلقائي</h3>
-                        <p><strong>رقم الوصل:</strong> ${waslNumber}</p>
-                        <p><strong>السبب:</strong> ${error.message}</p>
-                        <p>الطلب مؤكد مسبقاً لكن فشل إرسال المرجع.</p>
-                    </div>
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button onclick="retryConfirmedOrderSend('${waslNumber}')" class="btn" style="background: #ff6b35; color: white;">🔄 إعادة المحاولة</button>
-                        <button onclick="closeModal()" class="btn btn-primary">متابعة المسح</button>
-                    </div>
-                `);
-                
-                // حفظ البيانات للمحاولة مرة أخرى
-                window.confirmedOrderData = {
-                    waslNumber: waslNumber,
-                    orderData: orderData,
-                    resumeScanning: resumeScanning
-                };
-                
-                modal.dataset.resumeScanning = resumeScanning.toString();
             }
+            
+            // إعادة تعيين وضع الاختبار
+            window.isTestMode = false;
         }
         
         /**
@@ -1726,16 +1710,16 @@
                         </div>
                     `);
                     
-                    // التقاط صورة وإرسال لتيليجرام مع تنبيه أنه طلب مؤكد مسبقاً
-                    const imageBlob = await captureFrameAsBlob();
+                    // إرسال لتيليجرام بدون صورة (طلب مؤكد مسبقاً)
                     const modifiedOrderData = { ...orderData, alreadyConfirmed: true };
-                    await sendToTelegram(waslNumber, modifiedOrderData, imageBlob);
+                    await sendToTelegram(waslNumber, modifiedOrderData, null);
                     
                     // عرض رسالة النجاح
                     showModal('تم الإرسال بنجاح! ✅', `
                         <div class="success-message">
                             <h3>✅ تم إرسال الطلب المؤكد لتيليجرام</h3>
-                            <p>تم إرسال تفاصيل الطلب المؤكد مسبقاً إلى تيليجرام مع تنبيه خاص.</p>
+                            <p>تم إرسال تفاصيل الطلب المؤكد مسبقاً إلى تيليجرام.</p>
+                            <p><strong>📝 نص فقط (بدون صورة)</strong></p>
                         </div>
                         ${formatOrderDetails(orderData)}
                         <div style="text-align: center; margin-top: 20px;">
@@ -2024,12 +2008,18 @@
         }
         
         /**
-         * التقاط إطار من الفيديو كـ Blob
+         * التقاط إطار من الفيديو كـ Blob أو إنشاء صورة افتراضية
          */
         async function captureFrameAsBlob() {
-            console.log('📸 التقاط صورة من الفيديو');
+            console.log('📸 التقاط صورة...');
             
             try {
+                // التحقق من توفر الفيديو
+                if (!video || !video.videoWidth || !video.videoHeight || video.videoWidth === 0) {
+                    console.log('📱 الفيديو غير متاح، إنشاء صورة افتراضية للإدخال اليدوي');
+                    return await createDefaultImageBlob();
+                }
+                
                 // إنشاء كانفاس جديد للالتقاط
                 const captureCanvas = document.createElement('canvas');
                 const captureCtx = captureCanvas.getContext('2d');
@@ -2041,21 +2031,115 @@
                 // رسم الإطار الحالي
                 captureCtx.drawImage(video, 0, 0);
                 
-                // تحويل إلى Blob
+                // تحويل إلى Blob مع التحقق
                 return new Promise((resolve) => {
-                    captureCanvas.toBlob(resolve, 'image/jpeg', 0.8);
+                    captureCanvas.toBlob((blob) => {
+                        if (blob && blob.size > 0) {
+                            console.log('✅ تم التقاط الصورة من الفيديو بنجاح');
+                            resolve(blob);
+                        } else {
+                            console.log('⚠️ فشل التقاط من الفيديو، إنشاء صورة افتراضية');
+                            createDefaultImageBlob().then(resolve);
+                        }
+                    }, 'image/jpeg', 0.8);
                 });
                 
             } catch (error) {
                 console.error('❌ خطأ في التقاط الصورة:', error);
-                throw error;
+                console.log('🔄 إنشاء صورة افتراضية كبديل');
+                return await createDefaultImageBlob();
+            }
+        }
+        
+        /**
+         * إنشاء صورة افتراضية للإدخال اليدوي
+         */
+        async function createDefaultImageBlob() {
+            console.log('🖼️ إنشاء صورة افتراضية للإدخال اليدوي');
+            
+            try {
+                // إنشاء كانفاس للصورة الافتراضية
+                const defaultCanvas = document.createElement('canvas');
+                const defaultCtx = defaultCanvas.getContext('2d');
+                
+                // تحديد الأبعاد
+                defaultCanvas.width = 640;
+                defaultCanvas.height = 480;
+                
+                // رسم خلفية متدرجة
+                const gradient = defaultCtx.createLinearGradient(0, 0, 0, defaultCanvas.height);
+                gradient.addColorStop(0, '#4a90e2');
+                gradient.addColorStop(1, '#357abd');
+                defaultCtx.fillStyle = gradient;
+                defaultCtx.fillRect(0, 0, defaultCanvas.width, defaultCanvas.height);
+                
+                // رسم إطار
+                defaultCtx.strokeStyle = '#ffffff';
+                defaultCtx.lineWidth = 4;
+                defaultCtx.strokeRect(20, 20, defaultCanvas.width - 40, defaultCanvas.height - 40);
+                
+                // رسم النص الرئيسي
+                defaultCtx.fillStyle = '#ffffff';
+                defaultCtx.font = 'bold 32px Arial';
+                defaultCtx.textAlign = 'center';
+                defaultCtx.fillText('📱 QR Scanner', defaultCanvas.width / 2, defaultCanvas.height / 2 - 40);
+                
+                // رسم النص الفرعي
+                defaultCtx.font = 'bold 24px Arial';
+                defaultCtx.fillText('إدخال يدوي', defaultCanvas.width / 2, defaultCanvas.height / 2);
+                
+                // رسم التاريخ والوقت
+                const now = new Date();
+                const dateTime = now.toLocaleString('ar-IQ', {
+                    timeZone: 'Asia/Baghdad',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                defaultCtx.font = '16px Arial';
+                defaultCtx.fillText(dateTime, defaultCanvas.width / 2, defaultCanvas.height / 2 + 40);
+                
+                // تحويل إلى Blob مع ضمان النجاح
+                return new Promise((resolve) => {
+                    defaultCanvas.toBlob((blob) => {
+                        if (blob && blob.size > 0) {
+                            console.log('✅ تم إنشاء الصورة الافتراضية بنجاح');
+                            resolve(blob);
+                        } else {
+                            // إنشاء blob أساسي كحل أخير
+                            console.log('⚠️ إنشاء blob أساسي كحل أخير');
+                            const canvas = document.createElement('canvas');
+                            canvas.width = 640;
+                            canvas.height = 480;
+                            const ctx = canvas.getContext('2d');
+                            ctx.fillStyle = '#f0f0f0';
+                            ctx.fillRect(0, 0, 640, 480);
+                            canvas.toBlob(resolve, 'image/jpeg', 0.8);
+                        }
+                    }, 'image/jpeg', 0.9);
+                });
+                
+            } catch (error) {
+                console.error('❌ خطأ في إنشاء الصورة الافتراضية:', error);
+                // إنشاء blob أساسي كحل أخير
+                const canvas = document.createElement('canvas');
+                canvas.width = 640;
+                canvas.height = 480;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#cccccc';
+                ctx.fillRect(0, 0, 640, 480);
+                return new Promise((resolve) => {
+                    canvas.toBlob(resolve, 'image/jpeg', 0.8);
+                });
             }
         }
         
         /**
          * إرسال الصورة والتفاصيل إلى تيليجرام
          */
-        async function sendToTelegram(waslNumber, orderData, imageBlob) {
+        async function sendToTelegram(waslNumber, orderData, imageBlob = null) {
             console.log('📤 إرسال إلى تيليجرام');
             
             try {
@@ -2072,26 +2156,46 @@
                     ]]
                 };
                 
-                // تحضير البيانات للإرسال
-                const formData = new FormData();
-                formData.append('chat_id', TELEGRAM_CHAT_ID);
-                formData.append('photo', imageBlob, 'wasl_scan.jpg');
-                formData.append('caption', caption);
-                formData.append('parse_mode', 'HTML');
-                formData.append('reply_markup', JSON.stringify(keyboard));
+                let telegramUrl, requestBody;
+                
+                if (imageBlob) {
+                    // إرسال مع صورة (للطلبات الجديدة)
+                    console.log('📸 إرسال مع صورة');
+                    const formData = new FormData();
+                    formData.append('chat_id', TELEGRAM_CHAT_ID);
+                    formData.append('photo', imageBlob, 'wasl_scan.jpg');
+                    formData.append('caption', caption);
+                    formData.append('parse_mode', 'HTML');
+                    formData.append('reply_markup', JSON.stringify(keyboard));
+                    
+                    telegramUrl = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendPhoto`;
+                    requestBody = formData;
+                } else {
+                    // إرسال نص فقط (للطلبات المكررة/المؤكدة مسبقاً)
+                    console.log('📝 إرسال نص فقط (بدون صورة)');
+                    const textData = {
+                        chat_id: TELEGRAM_CHAT_ID,
+                        text: caption,
+                        parse_mode: 'HTML',
+                        reply_markup: keyboard
+                    };
+                    
+                    telegramUrl = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+                    requestBody = JSON.stringify(textData);
+                }
                 
                 // إرسال إلى تيليجرام
-                const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendPhoto`;
-                
                 const response = await fetch(telegramUrl, {
                     method: 'POST',
-                    body: formData
+                    headers: imageBlob ? {} : { 'Content-Type': 'application/json' },
+                    body: requestBody
                 });
                 
                 const result = await response.json();
                 
                 if (result.ok) {
-                    console.log('✅ تم الإرسال إلى تيليجرام بنجاح');
+                    const messageType = imageBlob ? 'مع صورة' : 'نص فقط';
+                    console.log(`✅ تم الإرسال إلى تيليجرام بنجاح (${messageType})`);
                 } else {
                     console.error('❌ خطأ في إرسال تيليجرام:', result);
                     throw new Error(result.description || 'فشل في الإرسال إلى تيليجرام');
@@ -2123,24 +2227,31 @@
             const time = `${dateTime.find(p => p.type === 'hour').value}:${dateTime.find(p => p.type === 'minute').value}:${dateTime.find(p => p.type === 'second').value}`;
             
             // تحديد نوع الطلب والحالة
-            let orderType = '🚚 تم مسح باركود جديد';
+            const isTestMode = window.isTestMode || false;
+            let orderType = isTestMode ? '🧪 اختبار - تم مسح باركود' : '🚚 تم مسح باركود جديد';
             let statusIcon = '🟢';
-            let confirmationType = 'تأكيد جديد';
+            let confirmationType = isTestMode ? 'اختبار تأكيد' : 'تأكيد جديد';
             
             if (orderData.alreadyConfirmed) {
-                orderType = '📋 مرجع طلب مؤكد مسبقاً';
+                orderType = isTestMode ? '🧪 اختبار - مرجع طلب مؤكد مسبقاً' : '📋 مرجع طلب مؤكد مسبقاً';
                 statusIcon = '🗂️';
-                confirmationType = 'مرجع طلب مؤكد';
-            } else if (orderData.forcedConfirmation) {
-                orderType = '⚡ تم تأكيد قسري';
+                confirmationType = isTestMode ? 'اختبار مرجع' : 'مرجع طلب مؤكد';
+            } else if (orderData.autoConfirmationSuccess) {
+                orderType = isTestMode ? '🧪 اختبار - تأكيد تلقائي ناجح' : '⚡ تم التأكيد التلقائي';
                 statusIcon = '⚡';
-                confirmationType = 'تأكيد قسري';
+                confirmationType = isTestMode ? 'اختبار تلقائي' : 'تأكيد تلقائي';
+            } else if (orderData.forcedConfirmation) {
+                orderType = isTestMode ? '🧪 اختبار - تأكيد قسري' : '⚡ تم تأكيد قسري';
+                statusIcon = '⚡';
+                confirmationType = isTestMode ? 'اختبار قسري' : 'تأكيد قسري';
             }
             
             let caption = orderType;
             
             if (orderData.alreadyConfirmed) {
                 caption += `\n🗂️ هذا مرجع لطلب تم تأكيده مسبقاً - للمراجعة فقط`;
+            } else if (orderData.autoConfirmationSuccess) {
+                caption += `\n⚡ تم تأكيد هذا الطلب تلقائياً من قبل النظام`;
             }
             
             caption += `
@@ -2149,11 +2260,17 @@
 • رقم الوصل: ${waslNumber}
 • رقم الطلب: ${orderData.order_id || 'غير محدد'}
 • المرسل: ${orderData.sender || 'غير محدد'}
+• اسم المستلم: ${orderData.recipient_name || 'غير محدد'}
 • هاتف المستلم: ${orderData.recipient_phone || 'غير محدد'}
 • منطقة المستلم: ${orderData.recipient_area || 'غير محدد'}
+• المحافظة: ${orderData.governorate || 'غير محدد'}
 • المبلغ الإجمالي: ${orderData.total_amount || 'غير محدد'}
+• أجرة التوصيل: ${orderData.delivery_fee || 'غير محدد'}
+• المبلغ الصافي: ${orderData.net_amount || 'غير محدد'}
 • نوع التأكيد: ${confirmationType}
-• الحالة: ${statusIcon}
+• الحالة: ${statusIcon}${orderData.confirmed_at ? `
+• تاريخ التأكيد: ${formatDateTime(orderData.confirmed_at)}` : ''}${orderData.source ? `
+• المصدر: ${orderData.source}` : ''}
 
 ⏰ وقت المسح:
 • التاريخ: ${date}
@@ -2164,16 +2281,24 @@
         }
         
         /**
-         * عرض رسالة النجاح (إغلاق تلقائي)
+         * عرض رسالة نجاح التأكيد التلقائي
          */
-        function showSuccessMessage(orderData, resumeScanning) {
+        function showAutoConfirmationSuccess(orderData, resumeScanning) {
             const detailsHtml = formatOrderDetails(orderData);
             
-            showModal('تم التأكيد بنجاح! ✅', `
+            // تحديد وضع التشغيل
+            const isTestMode = window.isTestMode || false;
+            const successTitle = isTestMode ? '🧪 اختبار مكتمل!' : '⚡ تم التأكيد التلقائي بنجاح!';
+            const modeText = isTestMode ? 'وضع الاختبار' : 'مسح فعلي';
+            const continueText = isTestMode ? 'انتهى الاختبار' : 'استمرار المسح خلال 3 ثوان...';
+            
+            showModal(successTitle, `
                 <div class="success-message">
-                    <h3>🎉 تم تأكيد الطلب بنجاح</h3>
-                    <p>تم إرسال التفاصيل إلى تيليجرام مع صورة الباركود</p>
-                    <p><strong>استمرار المسح خلال 3 ثوان...</strong></p>
+                    <h3>⚡ تم التأكيد التلقائي بنجاح</h3>
+
+                    <p>تم تأكيد الطلب تلقائياً وإرساله إلى تيليجرام مع صورة</p>
+                    <p><strong>📸 تم الإرسال مع صورة</strong></p>
+                    <p><strong>${continueText}</strong></p>
                 </div>
                 ${detailsHtml}
                 <div style="text-align: center; margin-top: 20px;">
@@ -2181,14 +2306,62 @@
                 </div>
             `);
             
-            // إغلاق تلقائي بعد 3 ثوان ومتابعة المسح
-            setTimeout(() => {
-                closeModal();
-                if (resumeScanning) {
-                    console.log('🔄 استمرار المسح تلقائياً بعد التأكيد الناجح...');
-                    startScanning();
-                }
-            }, 3000);
+            // إغلاق تلقائي بعد 3 ثوان ومتابعة المسح (إلا في وضع الاختبار)
+            if (!isTestMode) {
+                setTimeout(() => {
+                    closeModal();
+                    if (resumeScanning) {
+                        console.log('🔄 استمرار المسح تلقائياً بعد التأكيد التلقائي الناجح...');
+                        startScanning();
+                    }
+                }, 3000);
+            }
+            
+            // إعادة تعيين وضع الاختبار
+            window.isTestMode = false;
+            
+            // استئناف المسح عند إغلاق النافذة يدوياً
+            modal.dataset.resumeScanning = resumeScanning.toString();
+        }
+        
+        /**
+         * عرض رسالة النجاح (إغلاق تلقائي)
+         */
+        function showSuccessMessage(orderData, resumeScanning) {
+            const detailsHtml = formatOrderDetails(orderData);
+            
+            // تحديد وضع التشغيل
+            const isTestMode = window.isTestMode || false;
+            const successTitle = isTestMode ? '🧪 اختبار مكتمل!' : '✅ تم التأكيد بنجاح!';
+            const modeText = isTestMode ? 'وضع الاختبار' : 'مسح فعلي';
+            const continueText = isTestMode ? 'انتهى الاختبار' : 'استمرار المسح خلال 3 ثوان...';
+            
+            showModal(successTitle, `
+                <div class="success-message">
+                    <h3>🎉 تم تأكيد الطلب بنجاح</h3>
+
+                    <p>تم إرسال التفاصيل إلى تيليجرام مع صورة الباركود</p>
+                    <p><strong>${continueText}</strong></p>
+                </div>
+                ${detailsHtml}
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="closeModal()" class="btn btn-primary">متابعة الآن</button>
+                </div>
+            `);
+            
+            // إغلاق تلقائي بعد 3 ثوان ومتابعة المسح (إلا في وضع الاختبار)
+            if (!isTestMode) {
+                setTimeout(() => {
+                    closeModal();
+                    if (resumeScanning) {
+                        console.log('🔄 استمرار المسح تلقائياً بعد التأكيد الناجح...');
+                        startScanning();
+                    }
+                }, 3000);
+            }
+            
+            // إعادة تعيين وضع الاختبار
+            window.isTestMode = false;
             
             // استئناف المسح عند إغلاق النافذة يدوياً
             modal.dataset.resumeScanning = resumeScanning.toString();
@@ -2198,6 +2371,8 @@
          * تنسيق تفاصيل الطلب للعرض
          */
         function formatOrderDetails(orderData) {
+            if (!orderData) return '';
+            
             return `
                 <div class="order-details">
                     <h3>📋 تفاصيل الطلب</h3>
@@ -2214,6 +2389,10 @@
                         <span class="detail-value">${orderData.sender || 'غير محدد'}</span>
                     </div>
                     <div class="detail-row">
+                        <span class="detail-label">اسم المستلم:</span>
+                        <span class="detail-value">${orderData.recipient_name || 'غير محدد'}</span>
+                    </div>
+                    <div class="detail-row">
                         <span class="detail-label">هاتف المستلم:</span>
                         <span class="detail-value">${orderData.recipient_phone || 'غير محدد'}</span>
                     </div>
@@ -2222,11 +2401,57 @@
                         <span class="detail-value">${orderData.recipient_area || 'غير محدد'}</span>
                     </div>
                     <div class="detail-row">
+                        <span class="detail-label">المحافظة:</span>
+                        <span class="detail-value">${orderData.governorate || 'غير محدد'}</span>
+                    </div>
+                    <div class="detail-row">
                         <span class="detail-label">المبلغ الإجمالي:</span>
                         <span class="detail-value">${orderData.total_amount || 'غير محدد'}</span>
                     </div>
+                    <div class="detail-row">
+                        <span class="detail-label">أجرة التوصيل:</span>
+                        <span class="detail-value">${orderData.delivery_fee || 'غير محدد'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">المبلغ الصافي:</span>
+                        <span class="detail-value">${orderData.net_amount || 'غير محدد'}</span>
+                    </div>
+                    ${orderData.confirmed_at ? `
+                    <div class="detail-row">
+                        <span class="detail-label">تاريخ التأكيد:</span>
+                        <span class="detail-value">${formatDateTime(orderData.confirmed_at)}</span>
+                    </div>
+                    ` : ''}
+                    ${orderData.source ? `
+                    <div class="detail-row">
+                        <span class="detail-label">المصدر:</span>
+                        <span class="detail-value">${orderData.source}</span>
+                    </div>
+                    ` : ''}
                 </div>
             `;
+        }
+        
+        /**
+         * تنسيق التاريخ والوقت
+         */
+        function formatDateTime(dateTimeString) {
+            if (!dateTimeString) return 'غير محدد';
+            
+            try {
+                const date = new Date(dateTimeString);
+                return date.toLocaleString('ar-IQ', {
+                    timeZone: 'Asia/Baghdad',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+            } catch (error) {
+                return dateTimeString;
+            }
         }
         
         /**
