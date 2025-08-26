@@ -1177,8 +1177,29 @@
         async function analyzeWasl(waslNumber, resumeScanning = true) {
             console.log('🔬 بدء تحليل الوصل:', waslNumber);
             
+            // أولاً: فحص سريع للبحث عن بيانات الطلب لتحديد المحافظة
+            try {
+                console.log('🔍 فحص مبدئي للمحافظة...');
+                const quickSearchResult = await fetchWithRetry(`${API_BASE}/api/search/${waslNumber}`);
+                
+                if (quickSearchResult && quickSearchResult.success && quickSearchResult.data) {
+                    const area = quickSearchResult.data?.recipient_area || 
+                                quickSearchResult.data?.area || 
+                                quickSearchResult.data?.city || 
+                                quickSearchResult.data?.receiver_area || 
+                                quickSearchResult.data?.governorate || '';
+                    
+                    // فحص كربلاء فوراً
+                    if (checkIfKarbala(area)) {
+                        console.log('⚠️ تم اكتشاف طلب من كربلاء - عرض تحذير فوري');
+                        showKarbalaEarlyWarning(waslNumber, area, resumeScanning);
+                        return; // إيقاف المعالجة وانتظار قرار المستخدم
+                    }
+                }
+            } catch (error) {
+                console.log('⚠️ فشل الفحص المبدئي، سيتم المتابعة بالتحليل العادي:', error.message);
+            }
 
-            
             showModal('🔬 جارِ التحليل والتأكيد...', `
                 <div class="loading">
                     <div class="spinner"></div>
@@ -1856,6 +1877,276 @@
             return karbalaKeywords.some(keyword => 
                 areaLower.includes(keyword.toLowerCase())
             );
+        }
+        
+        /**
+         * عرض تحذير مبكر خاص بكربلاء
+         */
+        function showKarbalaEarlyWarning(waslNumber, area, resumeScanning) {
+            console.log('🚨 عرض تحذير كربلاء المبكر');
+            
+            // اهتزاز قوي للتنبيه
+            if ('vibrate' in navigator) {
+                navigator.vibrate([300, 150, 300, 150, 300]);
+            }
+            
+            // صوت تنبيه مرتفع
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                gainNode.gain.value = 0.3;
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.3);
+                
+                setTimeout(() => {
+                    const oscillator2 = audioContext.createOscillator();
+                    const gainNode2 = audioContext.createGain();
+                    
+                    oscillator2.connect(gainNode2);
+                    gainNode2.connect(audioContext.destination);
+                    
+                    oscillator2.frequency.value = 1000;
+                    gainNode2.gain.value = 0.3;
+                    
+                    oscillator2.start();
+                    oscillator2.stop(audioContext.currentTime + 0.3);
+                }, 400);
+            } catch (error) {
+                console.warn('لا يمكن تشغيل صوت التنبيه:', error);
+            }
+            
+            showModal('🚨 تحذير فوري: طلب من كربلاء المقدسة! 🚨', `
+                <div class="warning-message" style="
+                    background: linear-gradient(135deg, #ff4757, #ff3742);
+                    color: white;
+                    border: 4px solid #ff1744;
+                    border-radius: 15px;
+                    padding: 25px;
+                    text-align: center;
+                    animation: karbalaFlash 1.5s infinite;
+                    box-shadow: 0 0 30px rgba(255, 71, 87, 0.5);
+                ">
+                    <h3 style="color: white; font-size: 22px; margin-bottom: 15px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
+                        ⚠️ انتباه! طلب من محافظة كربلاء المقدسة ⚠️
+                    </h3>
+                    <p style="font-size: 18px; font-weight: bold; color: white; margin: 15px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
+                        رقم الوصل: <span style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 8px;">${waslNumber}</span>
+                    </p>
+                    <p style="font-size: 16px; color: white; margin: 15px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
+                        المحافظة: <span style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 8px;">${area}</span>
+                    </p>
+                    <p style="font-size: 16px; color: white; margin-top: 20px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
+                        يرجى التعامل بحذر خاص مع هذا الطلب
+                    </p>
+                </div>
+                
+                <div style="text-align: center; margin-top: 25px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                    <button onclick="proceedWithKarbalaAnalysis()" class="btn" style="
+                        background: linear-gradient(135deg, #ff4757, #ff3742);
+                        color: white;
+                        font-weight: bold;
+                        border: 2px solid #ff1744;
+                        padding: 12px 20px;
+                        font-size: 16px;
+                        border-radius: 10px;
+                        min-width: 140px;
+                        box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+                    ">
+                        متابعة التحليل ⚡
+                    </button>
+                    <button onclick="closeModal(); resumeScanning(true);" class="btn" style="
+                        background: #6c757d;
+                        color: white;
+                        border: 2px solid #5a6268;
+                        padding: 12px 20px;
+                        font-size: 16px;
+                        border-radius: 10px;
+                        min-width: 100px;
+                    ">
+                        إلغاء
+                    </button>
+                </div>
+                
+                <style>
+                    @keyframes karbalaFlash {
+                        0%, 100% { 
+                            opacity: 1; 
+                            transform: scale(1);
+                            box-shadow: 0 0 30px rgba(255, 71, 87, 0.5);
+                        }
+                        50% { 
+                            opacity: 0.9; 
+                            transform: scale(1.02);
+                            box-shadow: 0 0 40px rgba(255, 71, 87, 0.8);
+                        }
+                    }
+                </style>
+            `);
+            
+            // حفظ البيانات للمتابعة
+            window.pendingKarbalaAnalysis = {
+                waslNumber: waslNumber,
+                area: area,
+                resumeScanning: resumeScanning
+            };
+        }
+        
+        /**
+         * متابعة تحليل طلب كربلاء بعد التحذير المبكر
+         */
+        function proceedWithKarbalaAnalysis() {
+            if (window.pendingKarbalaAnalysis) {
+                const { waslNumber, resumeScanning } = window.pendingKarbalaAnalysis;
+                
+                console.log('✅ المستخدم وافق على متابعة تحليل طلب كربلاء');
+                closeModal();
+                
+                // متابعة التحليل العادي بعد التحذير
+                continueAnalysisAfterKarbalaWarning(waslNumber, resumeScanning);
+                
+                // تنظيف البيانات المؤقتة
+                delete window.pendingKarbalaAnalysis;
+            }
+        }
+        
+        /**
+         * متابعة التحليل بعد تحذير كربلاء
+         */
+        async function continueAnalysisAfterKarbalaWarning(waslNumber, resumeScanning) {
+            console.log('🔬 متابعة تحليل طلب كربلاء بعد التحذير...');
+            
+            showModal('🔬 جارِ التحليل والتأكيد...', `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>جارِ تحليل وتأكيد رقم الوصل: <strong>${waslNumber}</strong></p>
+                    <p>⚠️ طلب من كربلاء - يتم التعامل بحذر</p>
+                    <p>يرجى الانتظار...</p>
+                </div>
+            `);
+            
+            try {
+                // استدعاء موحد للبحث والتأكيد في نفس الوقت
+                console.log('🚀 استدعاء API موحد للبحث والتأكيد...');
+                
+                // أولاً: محاولة البحث لجلب البيانات
+                let orderData = null;
+                let searchSuccess = false;
+                
+                try {
+                    const searchResult = await fetchWithRetry(`${API_BASE}/api/search/${waslNumber}`);
+                    console.log('📊 نتائج البحث:', searchResult);
+                    
+                    if (searchResult && searchResult.success && searchResult.data) {
+                        orderData = {
+                            wasl_number: waslNumber,
+                            order_id: searchResult.data?.order_id || searchResult.data?.id,
+                            sender: searchResult.data?.sender || searchResult.data?.sender_name,
+                            
+                            // استخراج معلومات المستلم من JSON
+                            recipient_phone: searchResult.data?.recipient_phone || searchResult.data?.phone || 
+                                           searchResult.data?.receiver_phone || 'غير محدد',
+                            recipient_area: searchResult.data?.recipient_area || searchResult.data?.area || 
+                                          searchResult.data?.city || searchResult.data?.receiver_area || 
+                                          searchResult.data?.governorate || 'غير محدد',
+                            recipient_name: searchResult.data?.recipient_name || searchResult.data?.receiver_name || 'غير محدد',
+                            
+                            // معلومات المبالغ
+                            total_amount: searchResult.data?.total_amount || searchResult.data?.amount || 
+                                        searchResult.data?.price || '0',
+                            delivery_fee: searchResult.data?.delivery_fee || 'غير محدد',
+                            net_amount: searchResult.data?.net_amount || 'غير محدد',
+                            
+                            // تحليل حالة الطلب من JSON
+                            duplicate: searchResult.data?.duplicate || searchResult.data?.is_duplicate || false,
+                            confirmed: searchResult.data?.confirmed || searchResult.data?.is_confirmed || false,
+                            
+                            // معلومات إضافية
+                            status: searchResult.data?.status || 'غير محدد',
+                            notes: searchResult.data?.notes || '',
+                            created_at: searchResult.data?.created_at || searchResult.data?.date || 'غير محدد'
+                        };
+                        
+                        searchSuccess = true;
+                        console.log('✅ تم العثور على بيانات الطلب بنجاح');
+                    }
+                } catch (searchError) {
+                    console.warn('⚠️ فشل البحث الأولي:', searchError.message);
+                }
+                
+                if (!searchSuccess || !orderData) {
+                    closeModal();
+                    showError('لم يتم العثور على بيانات للطلب رقم: ' + waslNumber);
+                    if (resumeScanning) {
+                        setTimeout(() => {
+                            isScanning = true;
+                            processFrame();
+                            updateStatus('جاهز للمسح', 'ready');
+                        }, 2000);
+                    }
+                    return;
+                }
+                
+                // التحقق من حالة التأكيد والتكرار
+                if (orderData.confirmed) {
+                    console.log('ℹ️ الطلب مؤكد مسبقاً');
+                    closeModal();
+                    handleAlreadyConfirmedOrder(orderData, resumeScanning);
+                    return;
+                }
+                
+                if (orderData.duplicate) {
+                    console.log('⚠️ طلب مكرر');
+                    closeModal();
+                    handleDuplicateOrder(orderData, resumeScanning);
+                    return;
+                }
+                
+                // محاولة التأكيد المباشر
+                console.log('🚀 محاولة التأكيد المباشر...');
+                try {
+                    const confirmResult = await fetchWithRetry(`${API_BASE}/api/confirm/${waslNumber}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            wasl_number: waslNumber,
+                            timestamp: Date.now()
+                        })
+                    });
+                    
+                    console.log('📋 نتيجة التأكيد:', confirmResult);
+                    
+                    if (confirmResult && confirmResult.success) {
+                        console.log('✅ تم التأكيد بنجاح');
+                        
+                        // تحديد أنه تأكيد جديد
+                        orderData.newConfirmation = true;
+                        
+                        // نعرف بالفعل أنه من كربلاء، لذا سنعرض التحذير مباشرة
+                        closeModal();
+                        handleKarbalaWarning(orderData, resumeScanning, true);
+                        return;
+                    }
+                } catch (confirmError) {
+                    console.warn('⚠️ فشل التأكيد المباشر:', confirmError.message);
+                    
+                    // إذا فشل التأكيد، نعرض خيار التأكيد القسري
+                    closeModal();
+                    handleConfirmationRequired(orderData, resumeScanning);
+                    return;
+                }
+                
+            } catch (error) {
+                console.error('❌ خطأ في تحليل طلب كربلاء:', error);
+                closeModal();
+                handleAnalysisError(error, resumeScanning);
+            }
         }
         
         /**
@@ -2774,6 +3065,19 @@
                 processFrame();
             }
         });
+        
+        /**
+         * استئناف المسح
+         */
+        function resumeScanning(shouldResume = true) {
+            if (shouldResume) {
+                setTimeout(() => {
+                    isScanning = true;
+                    processFrame();
+                    updateStatus('جاهز للمسح', 'ready');
+                }, 1000);
+            }
+        }
         
         console.log('🎯 تطبيق ماسح QR جاهز للاستخدام');
     </script>
