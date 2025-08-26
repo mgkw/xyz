@@ -1113,84 +1113,84 @@
             `);
             
                          try {
-                 // استدعاء API للبحث أولاً (أسرع)
-                 console.log('🔍 استدعاء API للبحث...');
-                 const searchResult = await fetchWithRetry(`${API_BASE}/api/search/${waslNumber}`);
-                 console.log('📊 نتائج البحث:', searchResult);
-                 
-                 // إذا وجد النتيجة في البحث، تابع مباشرة
-                 if (searchResult && searchResult.success) {
-                     const orderData = {
-                         wasl_number: waslNumber,
-                         order_id: searchResult.data?.order_id || searchResult.data?.id,
-                         sender: searchResult.data?.sender || searchResult.data?.sender_name,
-                         recipient_phone: searchResult.data?.recipient_phone || searchResult.data?.phone,
-                         recipient_area: searchResult.data?.recipient_area || searchResult.data?.area || searchResult.data?.city,
-                         total_amount: searchResult.data?.total_amount || searchResult.data?.amount || searchResult.data?.price,
-                         duplicate: searchResult.data?.duplicate || searchResult.data?.is_duplicate || false,
-                         is_duplicate: searchResult.data?.duplicate || searchResult.data?.is_duplicate || false
-                     };
-                     
-                     // فحص إذا كانت المحافظة كربلاء
-                     if (checkIfKarbala(orderData.recipient_area)) {
-                         handleKarbalaWarning(orderData, resumeScanning);
-                         return;
-                     }
-                     
-                     // فحص التكرار
-                     if (orderData.duplicate || orderData.is_duplicate) {
-                         handleDuplicateOrder(orderData, resumeScanning);
-                         return;
-                     }
-                     
-                     // المتابعة مع التأكيد
-                     await confirmWasl(waslNumber, orderData, resumeScanning);
-                     return;
-                 }
-                 
-                 // إذا لم يجد في البحث، جرب التشخيص
-                 console.log('🩺 لم يوجد في البحث، جاري التشخيص...');
-                 const diagnoseResult = await fetchWithRetry(`${API_BASE}/api/diagnose/${waslNumber}`);
-                 console.log('🩺 نتائج التشخيص:', diagnoseResult);
-                 
-                 if (diagnoseResult && diagnoseResult.success) {
-                     const orderData = {
-                         wasl_number: waslNumber,
-                         order_id: diagnoseResult.data?.order_id || diagnoseResult.data?.id,
-                         sender: diagnoseResult.data?.sender || diagnoseResult.data?.sender_name,
-                         recipient_phone: diagnoseResult.data?.recipient_phone || diagnoseResult.data?.phone,
-                         recipient_area: diagnoseResult.data?.recipient_area || diagnoseResult.data?.area || diagnoseResult.data?.city,
-                         total_amount: diagnoseResult.data?.total_amount || diagnoseResult.data?.amount || diagnoseResult.data?.price,
-                         duplicate: diagnoseResult.data?.duplicate || diagnoseResult.data?.is_duplicate || false,
-                         is_duplicate: diagnoseResult.data?.duplicate || diagnoseResult.data?.is_duplicate || false
-                     };
-                     
-                     // فحص إذا كانت المحافظة كربلاء
-                     if (checkIfKarbala(orderData.recipient_area)) {
-                         handleKarbalaWarning(orderData, resumeScanning);
-                         return;
-                     }
-                     
-                     // فحص التكرار
-                     if (orderData.duplicate || orderData.is_duplicate) {
-                         handleDuplicateOrder(orderData, resumeScanning);
-                         return;
-                     }
-                     
-                     // المتابعة مع التأكيد
-                     await confirmWasl(waslNumber, orderData, resumeScanning);
-                     return;
-                 }
-                 
-                 // لم يتم العثور على الطلب في كلا المصدرين
-                 const errorMessage = searchResult?.message || diagnoseResult?.message || 
-                                     `لم يتم العثور على طلب برقم الوصل: ${waslNumber}`;
-                 handleOrderNotFound(waslNumber, errorMessage, resumeScanning);
-                 
-             } catch (error) {
-                 console.error('❌ خطأ في تحليل الوصل:', error);
-                 handleAnalysisError(error, resumeScanning);
-             }
+                // استدعاء API للبحث أولاً (أسرع)
+                console.log('🔍 استدعاء API للبحث...');
+                const searchResult = await fetchWithRetry(`${API_BASE}/api/search/${waslNumber}`);
+                console.log('📊 نتائج البحث:', searchResult);
+                
+                // إذا وجد النتيجة في البحث، تابع مباشرة
+                if (searchResult && searchResult.success) {
+                    const orderData = {
+                        wasl_number: waslNumber,
+                        order_id: searchResult.data?.order_id || searchResult.data?.id,
+                        sender: searchResult.data?.sender || searchResult.data?.sender_name,
+                        recipient_phone: searchResult.data?.recipient_phone || searchResult.data?.phone,
+                        recipient_area: searchResult.data?.recipient_area || searchResult.data?.area || searchResult.data?.city,
+                        total_amount: searchResult.data?.total_amount || searchResult.data?.amount || searchResult.data?.price,
+                        duplicate: searchResult.data?.duplicate || searchResult.data?.is_duplicate || false,
+                        is_duplicate: searchResult.data?.duplicate || searchResult.data?.is_duplicate || false
+                    };
+                    
+                    // فحص إذا كانت المحافظة كربلاء
+                    if (checkIfKarbala(orderData.recipient_area)) {
+                        handleKarbalaWarning(orderData, resumeScanning);
+                        return;
+                    }
+                    
+                    // فحص التكرار
+                    if (orderData.duplicate || orderData.is_duplicate) {
+                        handleDuplicateOrder(orderData, resumeScanning);
+                        return;
+                    }
+                    
+                    // المتابعة مع التأكيد
+                    await confirmWasl(waslNumber, orderData, resumeScanning);
+                    return;
+                }
+                
+                // إذا لم يجد في البحث، جرب التشخيص
+                console.log('🩺 لم يوجد في البحث، جاري التشخيص...');
+                const diagnoseResult = await fetchWithRetry(`${API_BASE}/api/diagnose/${waslNumber}`);
+                console.log('🩺 نتائج التشخيص:', diagnoseResult);
+                
+                if (diagnoseResult && diagnoseResult.success) {
+                    const orderData = {
+                        wasl_number: waslNumber,
+                        order_id: diagnoseResult.data?.order_id || diagnoseResult.data?.id,
+                        sender: diagnoseResult.data?.sender || diagnoseResult.data?.sender_name,
+                        recipient_phone: diagnoseResult.data?.recipient_phone || diagnoseResult.data?.phone,
+                        recipient_area: diagnoseResult.data?.recipient_area || diagnoseResult.data?.area || diagnoseResult.data?.city,
+                        total_amount: diagnoseResult.data?.total_amount || diagnoseResult.data?.amount || diagnoseResult.data?.price,
+                        duplicate: diagnoseResult.data?.duplicate || diagnoseResult.data?.is_duplicate || false,
+                        is_duplicate: diagnoseResult.data?.duplicate || diagnoseResult.data?.is_duplicate || false
+                    };
+                    
+                    // فحص إذا كانت المحافظة كربلاء
+                    if (checkIfKarbala(orderData.recipient_area)) {
+                        handleKarbalaWarning(orderData, resumeScanning);
+                        return;
+                    }
+                    
+                    // فحص التكرار
+                    if (orderData.duplicate || orderData.is_duplicate) {
+                        handleDuplicateOrder(orderData, resumeScanning);
+                        return;
+                    }
+                    
+                    // المتابعة مع التأكيد
+                    await confirmWasl(waslNumber, orderData, resumeScanning);
+                    return;
+                }
+                
+                // لم يتم العثور على الطلب في كلا المصدرين
+                const errorMessage = searchResult?.message || diagnoseResult?.message || 
+                                    `لم يتم العثور على طلب برقم الوصل: ${waslNumber}`;
+                handleOrderNotFound(waslNumber, errorMessage, resumeScanning);
+                
+            } catch (error) {
+                console.error('❌ خطأ في تحليل الوصل:', error);
+                handleAnalysisError(error, resumeScanning);
+            }
         }
         
         /**
@@ -1352,6 +1352,223 @@
         }
         
         /**
+         * عرض خيارات التأكيد عندما يفشل التأكيد العادي
+         */
+        function showConfirmationOptions(waslNumber, orderData, errorMessage, resumeScanning) {
+            console.log('🔧 عرض خيارات التأكيد البديلة');
+            
+            const detailsHtml = formatOrderDetails(orderData);
+            
+            showModal('خيارات التأكيد 🔧', `
+                <div class="warning-message">
+                    <h3>⚠️ فشل التأكيد العادي</h3>
+                    <p><strong>السبب:</strong> ${errorMessage}</p>
+                    <p>الطلب موجود في النظام لكن لا يمكن تأكيده بالطريقة العادية.</p>
+                </div>
+                ${detailsHtml}
+                <div class="order-details">
+                    <h3>🛠️ الخيارات المتاحة:</h3>
+                    <p><strong>1. التأكيد القسري:</strong> فرض تأكيد الطلب حتى لو كان مؤكداً مسبقاً</p>
+                    <p><strong>2. التحقق من الحالة:</strong> فحص حالة الطلب الحالية</p>
+                    <p><strong>3. إلغاء:</strong> العودة للمسح</p>
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="forceConfirmOrder('${waslNumber}', ${JSON.stringify(orderData).replace(/"/g, '&quot;')}, ${resumeScanning})" 
+                            class="btn" style="background: #ff6b35; color: white; margin: 5px;">
+                        🔨 تأكيد قسري
+                    </button>
+                    <button onclick="recheckOrderStatus('${waslNumber}', ${resumeScanning})" 
+                            class="btn btn-camera" style="margin: 5px;">
+                        🔍 فحص الحالة
+                    </button>
+                    <button onclick="closeModal()" class="btn" style="background: #666; color: white; margin: 5px;">
+                        ❌ إلغاء
+                    </button>
+                </div>
+            `);
+            
+            // حفظ البيانات للاستخدام اللاحق
+            window.pendingConfirmation = {
+                waslNumber: waslNumber,
+                orderData: orderData,
+                resumeScanning: resumeScanning
+            };
+        }
+        
+        /**
+         * التأكيد القسري للطلب
+         */
+        async function forceConfirmOrder(waslNumber, orderData, resumeScanning) {
+            console.log('🔨 بدء التأكيد القسري للطلب:', waslNumber);
+            
+            showModal('جارِ التأكيد القسري...', `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>جارِ التأكيد القسري للطلب...</p>
+                    <p>رقم الوصل: <strong>${waslNumber}</strong></p>
+                    <p style="color: #ff6b35; font-weight: bold;">⚠️ سيتم تأكيد الطلب حتى لو كان مؤكداً مسبقاً</p>
+                </div>
+            `);
+            
+            try {
+                const confirmData = {
+                    wasl_number: waslNumber,
+                    force: true // التأكيد القسري
+                };
+                
+                const response = await fetchWithRetry(`${API_BASE}/api/confirm`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(confirmData)
+                });
+                
+                console.log('🔨 نتيجة التأكيد القسري:', response);
+                
+                if (response.success) {
+                    // التقاط صورة من الفيديو
+                    const imageBlob = await captureFrameAsBlob();
+                    
+                    // إرسال إلى تيليجرام مع تنبيه أنه تأكيد قسري
+                    await sendToTelegram(waslNumber, {...orderData, forcedConfirmation: true}, imageBlob);
+                    
+                    // عرض رسالة النجاح
+                    showForcedConfirmationSuccess(orderData, resumeScanning);
+                    
+                } else {
+                    throw new Error(response.message || 'فشل في التأكيد القسري أيضاً');
+                }
+                
+            } catch (error) {
+                console.error('❌ خطأ في التأكيد القسري:', error);
+                showModal('فشل التأكيد القسري ❌', `
+                    <div class="error-message">
+                        <h3>❌ فشل في التأكيد القسري</h3>
+                        <p>لم يتمكن النظام من تأكيد الطلب حتى بالطريقة القسرية</p>
+                        <p><strong>التفاصيل:</strong> ${error.message}</p>
+                    </div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button onclick="contactSupport('${waslNumber}')" class="btn btn-camera">📞 اتصال بالدعم</button>
+                        <button onclick="closeModal()" class="btn btn-primary">إغلاق</button>
+                    </div>
+                `);
+            }
+        }
+        
+        /**
+         * إعادة فحص حالة الطلب
+         */
+        async function recheckOrderStatus(waslNumber, resumeScanning) {
+            console.log('🔍 إعادة فحص حالة الطلب:', waslNumber);
+            
+            showModal('جارِ فحص الحالة...', `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>جارِ فحص حالة الطلب...</p>
+                    <p>رقم الوصل: <strong>${waslNumber}</strong></p>
+                </div>
+            `);
+            
+            try {
+                // محاولة البحث مرة أخرى
+                const searchResult = await fetchWithRetry(`${API_BASE}/api/search/${waslNumber}`);
+                console.log('🔍 نتائج إعادة الفحص:', searchResult);
+                
+                if (searchResult && searchResult.success) {
+                    const orderData = {
+                        wasl_number: waslNumber,
+                        order_id: searchResult.data?.order_id || searchResult.data?.id,
+                        sender: searchResult.data?.sender || searchResult.data?.sender_name,
+                        recipient_phone: searchResult.data?.recipient_phone || searchResult.data?.phone,
+                        recipient_area: searchResult.data?.recipient_area || searchResult.data?.area || searchResult.data?.city,
+                        total_amount: searchResult.data?.total_amount || searchResult.data?.amount || searchResult.data?.price,
+                        status: searchResult.data?.status || 'غير محدد',
+                        confirmed: searchResult.data?.confirmed || false,
+                        duplicate: searchResult.data?.duplicate || searchResult.data?.is_duplicate || false
+                    };
+                    
+                    const detailsHtml = formatOrderDetails(orderData);
+                    
+                    showModal('حالة الطلب الحالية 📊', `
+                        <div class="success-message">
+                            <h3>✅ تم العثور على الطلب</h3>
+                            <p><strong>الحالة:</strong> ${orderData.status}</p>
+                            <p><strong>مؤكد:</strong> ${orderData.confirmed ? '✅ نعم' : '❌ لا'}</p>
+                        </div>
+                        ${detailsHtml}
+                        <div style="text-align: center; margin-top: 20px;">
+                            ${orderData.confirmed ? 
+                                '<p style="color: #28a745; font-weight: bold;">هذا الطلب مؤكد بالفعل ✅</p>' : 
+                                `<button onclick="forceConfirmOrder('${waslNumber}', ${JSON.stringify(orderData).replace(/"/g, '&quot;')}, ${resumeScanning})" class="btn btn-primary">تأكيد الآن</button>`
+                            }
+                            <button onclick="closeModal()" class="btn btn-camera">إغلاق</button>
+                        </div>
+                    `);
+                    
+                } else {
+                    throw new Error(searchResult?.message || 'لم يتم العثور على الطلب');
+                }
+                
+            } catch (error) {
+                console.error('❌ خطأ في فحص الحالة:', error);
+                showModal('خطأ في فحص الحالة ❌', `
+                    <div class="error-message">
+                        <h3>❌ فشل في فحص حالة الطلب</h3>
+                        <p><strong>التفاصيل:</strong> ${error.message}</p>
+                    </div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button onclick="closeModal()" class="btn btn-primary">إغلاق</button>
+                    </div>
+                `);
+            }
+        }
+        
+        /**
+         * عرض رسالة نجاح التأكيد القسري
+         */
+        function showForcedConfirmationSuccess(orderData, resumeScanning) {
+            const detailsHtml = formatOrderDetails(orderData);
+            
+            showModal('تم التأكيد القسري بنجاح! ⚡', `
+                <div class="warning-message" style="background: #ff6b35; color: white; border-color: #ff6b35;">
+                    <h3 style="color: white;">⚡ تم التأكيد القسري بنجاح</h3>
+                    <p style="color: white;">تم تأكيد الطلب بالطريقة القسرية وإرسال التفاصيل إلى تيليجرام</p>
+                </div>
+                ${detailsHtml}
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="closeModal()" class="btn btn-primary">متابعة المسح</button>
+                </div>
+            `);
+            
+            // استئناف المسح عند إغلاق النافذة
+            modal.dataset.resumeScanning = resumeScanning.toString();
+        }
+        
+        /**
+         * اتصال بالدعم
+         */
+        function contactSupport(waslNumber) {
+            showModal('اتصال بالدعم 📞', `
+                <div class="order-details">
+                    <h3>📞 معلومات الاتصال بالدعم</h3>
+                    <p>رقم الوصل المشكل: <strong>${waslNumber}</strong></p>
+                    <p>نوع المشكلة: فشل في تأكيد الطلب</p>
+                    <br>
+                    <p><strong>يرجى الاتصال بفريق الدعم على:</strong></p>
+                    <p>📱 الهاتف: [رقم الدعم]</p>
+                    <p>💬 واتساب: [رقم واتساب]</p>
+                    <p>📧 الإيميل: [إيميل الدعم]</p>
+                    <br>
+                    <p>أذكر رقم الوصل <strong>${waslNumber}</strong> عند الاتصال</p>
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="closeModal()" class="btn btn-primary">إغلاق</button>
+                </div>
+            `);
+        }
+
+        /**
          * متابعة تأكيد طلب كربلاء بعد التحذير
          */
         function proceedWithKarbalaOrder() {
@@ -1416,14 +1633,33 @@
                      
                  } else {
                      // التعامل مع حالات الخطأ المختلفة
-                     if (response.message && response.message.includes('لم يتم العثور على طلب')) {
-                         handleOrderNotFound(waslNumber, response.message, resumeScanning);
-                         return; // إنهاء الدالة هنا لتجنب معالجة إضافية
-                     } else if (response.message && response.message.includes('مكرر')) {
+                     console.log('⚠️ فشل التأكيد:', response);
+                     
+                     if (response.message && (response.message.includes('لم يتم العثور على طلب') || response.message.includes('not found'))) {
+                         // إذا فشل التأكيد بسبب عدم وجود الطلب، لكن لدينا بيانات الطلب من البحث السابق
+                         // فهذا يعني أن الطلب موجود لكن ربما تم تأكيده مسبقاً أو هناك مشكلة في API
+                         if (orderData && orderData.order_id) {
+                             console.log('🔄 الطلب موجود في البيانات لكن فشل التأكيد - ربما مؤكد مسبقاً');
+                             
+                             // فحص إذا كانت الرسالة تشير إلى تكرار
+                             if (response.message.includes('مؤكد') || response.message.includes('confirmed') || response.message.includes('مكرر')) {
+                                 const duplicateOrderData = { ...orderData, duplicate: true };
+                                 handleDuplicateOrder(duplicateOrderData, resumeScanning);
+                                 return;
+                             }
+                             
+                             // محاولة التأكيد القسري
+                             showConfirmationOptions(waslNumber, orderData, response.message, resumeScanning);
+                             return;
+                         } else {
+                             handleOrderNotFound(waslNumber, response.message, resumeScanning);
+                             return;
+                         }
+                     } else if (response.message && (response.message.includes('مكرر') || response.message.includes('duplicate') || response.message.includes('confirmed'))) {
                          // تعامل مع الطلب المكرر
                          const duplicateOrderData = { ...orderData, duplicate: true };
                          handleDuplicateOrder(duplicateOrderData, resumeScanning);
-                         return; // إنهاء الدالة هنا لتجنب معالجة إضافية
+                         return;
                      } else {
                          throw new Error(response.message || 'فشل في تأكيد الطلب');
                      }
@@ -1534,7 +1770,17 @@
             const date = `${dateTime.find(p => p.type === 'year').value}-${dateTime.find(p => p.type === 'month').value}-${dateTime.find(p => p.type === 'day').value}`;
             const time = `${dateTime.find(p => p.type === 'hour').value}:${dateTime.find(p => p.type === 'minute').value}:${dateTime.find(p => p.type === 'second').value}`;
             
-            return `🚚 تم مسح باركود جديد
+            // إضافة تنبيه للتأكيد القسري
+            const confirmationType = orderData.forcedConfirmation ? '⚡ تأكيد قسري' : '✅ تأكيد عادي';
+            const statusIcon = orderData.forcedConfirmation ? '⚡' : '🟢';
+            
+            let caption = `🚚 تم مسح باركود جديد`;
+            
+            if (orderData.forcedConfirmation) {
+                caption += `\n⚠️ تم التأكيد بالطريقة القسرية`;
+            }
+            
+            caption += `
 
 📊 تفاصيل الطلب:
 • رقم الوصل: ${waslNumber}
@@ -1543,12 +1789,15 @@
 • هاتف المستلم: ${orderData.recipient_phone || 'غير محدد'}
 • منطقة المستلم: ${orderData.recipient_area || 'غير محدد'}
 • المبلغ الإجمالي: ${orderData.total_amount || 'غير محدد'}
-• الحالة: 🟢
+• نوع التأكيد: ${confirmationType}
+• الحالة: ${statusIcon}
 
 ⏰ وقت المسح:
 • التاريخ: ${date}
 • الوقت: ${time}
 • التوقيت: بغداد`;
+
+            return caption;
         }
         
         /**
