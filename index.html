@@ -1247,10 +1247,10 @@
                         });
                         
                         // فحص فوري لمحافظة كربلاء وعرض التحذير (إلا إذا تم تجاهل الفحص)
-                        const areaToCheck = orderData.recipient_area || orderData.governorate || orderData.area;
-                        if (!window.skipKarbalaCheck && checkIfKarbala(areaToCheck)) {
+                        if (!window.skipKarbalaCheck && checkIfKarbala(orderData.recipient_area, orderData.governorate)) {
                             console.log('⚠️ تم اكتشاف طلب من كربلاء - عرض تحذير فوري');
-                            console.log('📍 المنطقة المكتشفة:', areaToCheck);
+                            console.log('📍 المنطقة المكتشفة:', orderData.recipient_area);
+                            console.log('📍 المحافظة المكتشفة:', orderData.governorate);
                             closeModal();
                             showKarbalaSimpleWarning(orderData, resumeScanning);
                             return; // إيقاف المعالجة وانتظار قرار المستخدم
@@ -1301,7 +1301,7 @@
                     orderData.newConfirmation = true;
                     
                     // فحص إذا كانت المحافظة كربلاء
-                    if (checkIfKarbala(orderData.recipient_area)) {
+                    if (checkIfKarbala(orderData.recipient_area, orderData.governorate)) {
                         // إلغاء النافذة الحالية وعرض تحذير كربلاء
                         closeModal();
                         handleKarbalaWarning(orderData, resumeScanning, true); // معامل إضافي يشير أن التأكيد تم
@@ -1329,7 +1329,7 @@
                         orderData.autoConfirmationSuccess = true;
                         
                         // فحص إذا كانت المحافظة كربلاء
-                        if (checkIfKarbala(orderData.recipient_area || orderData.governorate)) {
+                        if (checkIfKarbala(orderData.recipient_area, orderData.governorate)) {
                             closeModal();
                             handleKarbalaWarning(orderData, resumeScanning, true);
                             return;
@@ -1859,20 +1859,43 @@
         /**
          * فحص إذا كانت المنطقة تحتوي على كربلاء
          */
-        function checkIfKarbala(area) {
-            if (!area) return false;
+        function checkIfKarbala(area, governorate = null) {
+            // فحص المنطقة أولاً
+            if (area && area.trim()) {
+                const areaLower = area.toLowerCase().trim();
+                const karbalaKeywords = ['كربلاء', 'karbala', 'كرب', 'المقدسة'];
+                
+                console.log('🔍 فحص كربلاء في المنطقة:', { area: area, areaLower: areaLower });
+                
+                const isKarbalaInArea = karbalaKeywords.some(keyword => 
+                    areaLower.includes(keyword.toLowerCase())
+                );
+                
+                if (isKarbalaInArea) {
+                    console.log('📍 تم العثور على كربلاء في المنطقة');
+                    return true;
+                }
+            }
             
-            const areaLower = area.toLowerCase().trim();
-            const karbalaKeywords = ['كربلاء', 'karbala', 'كرب', 'المقدسة'];
+            // إذا لم توجد في المنطقة، فحص المحافظة
+            if (governorate && governorate.trim()) {
+                const governorateLower = governorate.toLowerCase().trim();
+                const karbalaKeywords = ['كربلاء', 'karbala', 'كرب', 'المقدسة'];
+                
+                console.log('🔍 فحص كربلاء في المحافظة:', { governorate: governorate, governorateLower: governorateLower });
+                
+                const isKarbalaInGovernorate = karbalaKeywords.some(keyword => 
+                    governorateLower.includes(keyword.toLowerCase())
+                );
+                
+                if (isKarbalaInGovernorate) {
+                    console.log('📍 تم العثور على كربلاء في المحافظة');
+                    return true;
+                }
+            }
             
-            console.log('🔍 فحص كربلاء:', { area: area, areaLower: areaLower });
-            
-            const isKarbala = karbalaKeywords.some(keyword => 
-                areaLower.includes(keyword.toLowerCase())
-            );
-            
-            console.log('📍 نتيجة فحص كربلاء:', isKarbala);
-            return isKarbala;
+            console.log('📍 لم يتم العثور على كربلاء في أي من الحقول');
+            return false;
         }
         
         /**
@@ -1922,7 +1945,10 @@
                         رقم الوصل: <span style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 6px;">${orderData.wasl_number}</span>
                     </p>
                     <p style="font-size: 15px; color: white; margin: 10px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
-                        المحافظة: <span style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 6px;">${orderData.recipient_area || orderData.governorate || orderData.area || 'غير محدد'}</span>
+                        المنطقة: <span style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 6px;">${orderData.recipient_area || 'غير محدد'}</span>
+                    </p>
+                    <p style="font-size: 15px; color: white; margin: 10px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
+                        المحافظة: <span style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 6px;">${orderData.governorate || 'غير محدد'}</span>
                     </p>
                     <p style="font-size: 14px; color: white; margin-top: 15px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
                         يرجى التعامل بحذر خاص مع هذا الطلب
@@ -1989,8 +2015,8 @@
                 console.log('✅ المستخدم وافق على متابعة معالجة طلب كربلاء');
                 closeModal();
                 
-                // متابعة المعالجة العادية
-                continueAnalysisAfterWarning(orderData.wasl_number, resumeScanning);
+                // متابعة المعالجة مع البيانات الموجودة بدلاً من إعادة الاستدعاء
+                continueKarbalaProcessing(orderData, resumeScanning);
                 
                 // تنظيف البيانات المؤقتة
                 delete window.pendingKarbalaOrder;
@@ -1998,7 +2024,55 @@
         }
         
         /**
-         * متابعة التحليل بعد التحذير
+         * متابعة معالجة طلب كربلاء مع البيانات الموجودة
+         */
+        async function continueKarbalaProcessing(orderData, resumeScanning) {
+            console.log('🔄 متابعة معالجة طلب كربلاء مع البيانات الموجودة...');
+            
+            try {
+                // فحص إذا كان الطلب يحتاج تأكيد أم لا
+                if (orderData.newConfirmation || orderData.autoConfirmationSuccess) {
+                    // الطلب تم تأكيده بالفعل - إرسال مباشر لتيليجرام
+                    console.log('✅ الطلب تم تأكيده بالفعل - إرسال لتيليجرام');
+                    
+                    showModal('جارِ الإرسال لتيليجرام...', `
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <p>جارِ إرسال تفاصيل الطلب لتيليجرام...</p>
+                            <p>رقم الوصل: <strong>${orderData.wasl_number}</strong></p>
+                        </div>
+                    `);
+                    
+                    // استخدام الصورة المُلتقطة مسبقاً وإرسال لتيليجرام
+                    const imageBlob = window.capturedImageBlob || await captureFrameAsBlob();
+                    await sendToTelegram(orderData.wasl_number, orderData, imageBlob);
+                    
+                    // عرض رسالة النجاح
+                    if (orderData.autoConfirmationSuccess) {
+                        showAutoConfirmationSuccess(orderData, resumeScanning);
+                    } else {
+                        showSuccessMessage(orderData, resumeScanning);
+                    }
+                    
+                } else if (orderData.duplicate || orderData.is_duplicate) {
+                    // طلب مكرر
+                    console.log('🔄 طلب مكرر - عرض رسالة التكرار');
+                    handleDuplicateOrder(orderData, resumeScanning);
+                    
+                } else {
+                    // طلب جديد يحتاج تأكيد
+                    console.log('🔄 طلب جديد - محاولة التأكيد');
+                    await confirmWasl(orderData.wasl_number, orderData, resumeScanning);
+                }
+                
+            } catch (error) {
+                console.error('❌ خطأ في متابعة معالجة طلب كربلاء:', error);
+                handleAnalysisError(error, resumeScanning);
+            }
+        }
+        
+        /**
+         * متابعة التحليل بعد التحذير (احتياطي - لم يعد مستخدم)
          */
         async function continueAnalysisAfterWarning(waslNumber, resumeScanning) {
             console.log('🔄 متابعة التحليل بعد تحذير كربلاء...');
