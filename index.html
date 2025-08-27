@@ -1939,7 +1939,7 @@
                     box-shadow: 0 0 25px rgba(255, 71, 87, 0.4);
                 ">
                     <h3 style="color: white; font-size: 20px; margin-bottom: 15px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
-                        ⚠️ انتباه! طلب من محافظة كربلاء المقدسة ⚠️
+                        ✅ تم التأكيد - تنبيه: هذا الطلب عنوانه كربلاء ⚠️
                     </h3>
                     <p style="font-size: 16px; font-weight: bold; color: white; margin: 10px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
                         رقم الوصل: <span style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 6px;">${orderData.wasl_number}</span>
@@ -1951,34 +1951,23 @@
                         المحافظة: <span style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 6px;">${orderData.governorate || 'غير محدد'}</span>
                     </p>
                     <p style="font-size: 14px; color: white; margin-top: 15px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
-                        يرجى التعامل بحذر خاص مع هذا الطلب
+                        تم تأكيد الطلب وإرساله لتيليجرام - هذا مجرد تنبيه للانتباه
                     </p>
                 </div>
                 
-                <div style="text-align: center; margin-top: 20px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                    <button onclick="continueAfterKarbalaWarning()" class="btn" style="
-                        background: linear-gradient(135deg, #28a745, #20c997);
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="closeModal(); resumeScanning();" class="btn" style="
+                        background: linear-gradient(135deg, #007bff, #0056b3);
                         color: white;
                         font-weight: bold;
-                        border: 2px solid #1e7e34;
-                        padding: 12px 18px;
-                        font-size: 15px;
+                        border: 2px solid #004085;
+                        padding: 15px 25px;
+                        font-size: 16px;
                         border-radius: 8px;
-                        min-width: 120px;
-                        box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+                        min-width: 150px;
+                        box-shadow: 0 3px 10px rgba(0, 123, 255, 0.3);
                     ">
-                        متابعة المعالجة ✅
-                    </button>
-                    <button onclick="closeModal(); resumeScanning();" class="btn" style="
-                        background: #6c757d;
-                        color: white;
-                        border: 2px solid #5a6268;
-                        padding: 12px 18px;
-                        font-size: 15px;
-                        border-radius: 8px;
-                        min-width: 80px;
-                    ">
-                        إلغاء
+                        استمرار المسح 🔍
                     </button>
                 </div>
                 
