@@ -510,8 +510,6 @@
         <button id="cameraBtn" class="btn btn-camera">🔄 تبديل الكاميرا</button>
         <button id="torchBtn" class="btn btn-torch">🔦 الفلاش</button>
         <button id="manualBtn" class="btn btn-camera">✏️ إدخال يدوي</button>
-        <button id="testApiBtn" class="btn" style="background: #17a2b8; color: white;">🔧 اختبار API</button>
-        <button id="simpleTestBtn" class="btn" style="background: #6c757d; color: white;" onclick="simpleApiTest()">🧪 اختبار سريع</button>
 
     </div>
     
@@ -547,13 +545,6 @@
         const TELEGRAM_TOKEN = '8254979672:AAGuR8kZHsFd4eBA2DuZajLrHgUDOImg51I';
         const TELEGRAM_CHAT_ID = '-1002337640682';
         
-        // وضع التشخيص المحسن
-        const DEBUG_MODE = true; // تفعيل وضع التشخيص
-        
-        // إعدادات إضافية لحل مشاكل الاتصال
-        const API_TIMEOUT = 15000; // 15 ثانية timeout
-        const MAX_RETRIES = 3; // عدد المحاولات الأقصى
-        
         // متغيرات عامة للتطبيق
         let video, canvas, ctx;
         let currentStream = null;
@@ -570,7 +561,7 @@
         const cameraBtn = document.getElementById('cameraBtn');
         const torchBtn = document.getElementById('torchBtn');
         const manualBtn = document.getElementById('manualBtn');
-        const testApiBtn = document.getElementById('testApiBtn');
+        const testBtn = document.getElementById('testBtn');
         const statusText = document.getElementById('statusText');
         const modal = document.getElementById('modal');
         const modalBody = document.getElementById('modalBody');
@@ -606,18 +597,7 @@
             cameraBtn.addEventListener('click', switchCamera);
             torchBtn.addEventListener('click', toggleTorch);
             manualBtn.addEventListener('click', () => showManualEntry());
-            
-            // التحقق من وجود زر اختبار API
-            if (testApiBtn) {
-                testApiBtn.addEventListener('click', function() {
-                    console.log('🔧 تم الضغط على زر اختبار API');
-                    testApiConnection();
-                });
-                console.log('✅ تم ربط زر اختبار API بنجاح');
-            } else {
-                console.error('❌ لم يتم العثور على زر اختبار API');
-            }
-            
+            testBtn.addEventListener('click', showTestMenu);
             modalClose.addEventListener('click', closeModal);
             
             // إغلاق النافذة المنبثقة بالضغط خارجها
@@ -2789,44 +2769,20 @@
         }
         
         /**
-         * طلب HTTP مع إعادة المحاولة وتشخيص محسن
+         * طلب HTTP مع إعادة المحاولة
          */
-        async function fetchWithRetry(url, options = {}, maxRetries = MAX_RETRIES) {
+        async function fetchWithRetry(url, options = {}, maxRetries = 3) {
             let lastError;
-            
-            if (DEBUG_MODE) {
-                console.log('🌐 بدء طلب API:', { url, options, maxRetries });
-            }
             
             for (let i = 0; i < maxRetries; i++) {
                 try {
-                    if (DEBUG_MODE) {
-                        console.log(`🔄 المحاولة ${i + 1}/${maxRetries} لـ: ${url}`);
-                    }
-                    
-                    // إنشاء AbortController للتحكم في timeout
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
-                    
                     const response = await fetch(url, {
                         ...options,
-                        signal: controller.signal,
                         headers: {
                             'Content-Type': 'application/json',
                             ...options.headers
                         }
                     });
-                    
-                    clearTimeout(timeoutId);
-                    
-                    if (DEBUG_MODE) {
-                        console.log('📡 استجابة الخادم:', {
-                            status: response.status,
-                            statusText: response.statusText,
-                            headers: Object.fromEntries(response.headers.entries()),
-                            url: response.url
-                        });
-                    }
                     
                     if (response.status === 429) {
                         // معدل الطلبات مرتفع - انتظار قبل إعادة المحاولة
@@ -2836,101 +2792,24 @@
                         continue;
                     }
                     
-                    // التحقق من نوع المحتوى
-                    const contentType = response.headers.get('content-type');
-                    if (DEBUG_MODE) {
-                        console.log('📄 نوع المحتوى:', contentType);
+                    if (!response.ok && response.status >= 500) {
+                        throw new Error(`خطأ في الخادم: ${response.status}`);
                     }
                     
-                    if (!response.ok) {
-                        // محاولة قراءة رسالة الخطأ
-                        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-                        try {
-                            if (contentType && contentType.includes('application/json')) {
-                                const errorData = await response.json();
-                                errorMessage = errorData.message || errorData.error || errorMessage;
-                                if (DEBUG_MODE) {
-                                    console.log('❌ تفاصيل خطأ الخادم:', errorData);
-                                }
-                            } else {
-                                const errorText = await response.text();
-                                if (errorText && errorText.length < 500) {
-                                    errorMessage = errorText;
-                                }
-                                if (DEBUG_MODE) {
-                                    console.log('❌ نص خطأ الخادم:', errorText.substring(0, 200));
-                                }
-                            }
-                        } catch (parseError) {
-                            if (DEBUG_MODE) {
-                                console.warn('⚠️ فشل في قراءة رسالة الخطأ:', parseError);
-                            }
-                        }
-                        
-                        throw new Error(errorMessage);
-                    }
-                    
-                    // محاولة تحليل الاستجابة
-                    let data;
-                    try {
-                        if (contentType && contentType.includes('application/json')) {
-                            data = await response.json();
-                        } else {
-                            // إذا لم يكن JSON، نحاول قراءة النص
-                            const textData = await response.text();
-                            if (DEBUG_MODE) {
-                                console.log('📝 استجابة نصية:', textData.substring(0, 200));
-                            }
-                            // محاولة تحليل كـ JSON
-                            try {
-                                data = JSON.parse(textData);
-                            } catch {
-                                // إذا فشل التحليل، نعيد النص كما هو
-                                data = { message: textData, success: false };
-                            }
-                        }
-                    } catch (parseError) {
-                        console.error('❌ فشل في تحليل الاستجابة:', parseError);
-                        throw new Error(`فشل في تحليل استجابة الخادم: ${parseError.message}`);
-                    }
-                    
-                    if (DEBUG_MODE) {
-                        console.log('✅ استجابة ناجحة:', data);
-                    }
-                    
+                    const data = await response.json();
                     return data;
                     
                 } catch (error) {
                     lastError = error;
-                    
-                    // تحسين رسائل الخطأ
-                    let errorType = 'خطأ عام';
-                    if (error.name === 'AbortError') {
-                        errorType = 'انتهت مهلة الاستجابة (Timeout)';
-                    } else if (error.message.includes('Failed to fetch')) {
-                        errorType = 'فشل في الاتصال بالخادم';
-                    } else if (error.message.includes('CORS')) {
-                        errorType = 'مشكلة CORS';
-                    } else if (error.message.includes('Network')) {
-                        errorType = 'مشكلة في الشبكة';
-                    }
-                    
-                    console.warn(`⚠️ المحاولة ${i + 1} فشلت (${errorType}):`, {
-                        message: error.message,
-                        name: error.name,
-                        type: errorType,
-                        stack: DEBUG_MODE ? error.stack : undefined
-                    });
+                    console.warn(`⚠️ المحاولة ${i + 1} فشلت:`, error.message);
                     
                     if (i < maxRetries - 1) {
                         const delay = Math.pow(2, i) * 1000;
-                        console.log(`⏳ انتظار ${delay}ms قبل إعادة المحاولة...`);
                         await new Promise(resolve => setTimeout(resolve, delay));
                     }
                 }
             }
             
-            console.error('❌ فشل في جميع المحاولات:', lastError);
             throw lastError;
         }
         
@@ -3091,321 +2970,6 @@
             }, 100);
         }
         
-        /**
-         * اختبار API سريع ومبسط
-         */
-        function simpleApiTest() {
-            console.log('🧪 اختبار API سريع');
-            alert('تم الضغط على الاختبار السريع! افحص Console (F12) للتفاصيل.');
-            
-            // اختبار بسيط جداً
-            fetch(API_BASE)
-                .then(response => {
-                    console.log('✅ استجابة الخادم:', response.status, response.statusText);
-                    alert(`استجابة الخادم: ${response.status} ${response.statusText}`);
-                })
-                .catch(error => {
-                    console.error('❌ خطأ:', error);
-                    alert(`خطأ: ${error.message}`);
-                });
-        }
-
-        /**
-         * فحص حالة الشبكة
-         */
-        function checkNetworkStatus() {
-            const online = navigator.onLine;
-            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-            
-            const networkInfo = {
-                online: online,
-                effectiveType: connection?.effectiveType || 'unknown',
-                downlink: connection?.downlink || 'unknown',
-                rtt: connection?.rtt || 'unknown'
-            };
-            
-            if (DEBUG_MODE) {
-                console.log('🌐 حالة الشبكة:', networkInfo);
-            }
-            
-            return networkInfo;
-        }
-
-        /**
-         * اختبار الاتصال مع API
-         */
-        async function testApiConnection() {
-            console.log('🚀 بدء دالة اختبار API');
-            
-            try {
-                showModal('🔧 اختبار الاتصال مع API...', `
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <p>جارِ اختبار الاتصال مع الخادم...</p>
-                    <p>الخادم: <strong>${API_BASE}</strong></p>
-                </div>
-            `);
-            
-            const testResults = {
-                server: { status: 'testing', message: 'جارِ الاختبار...' },
-                search: { status: 'testing', message: 'جارِ الاختبار...' },
-                confirm: { status: 'testing', message: 'جارِ الاختبار...' },
-                telegram: { status: 'testing', message: 'جارِ الاختبار...' }
-            };
-            
-            try {
-                // 0. فحص حالة الشبكة أولاً
-                const networkStatus = checkNetworkStatus();
-                if (!networkStatus.online) {
-                    throw new Error('لا يوجد اتصال بالإنترنت');
-                }
-                
-                // 1. اختبار الاتصال الأساسي مع الخادم
-                console.log('🔍 اختبار الاتصال الأساسي...');
-                try {
-                    const response = await fetch(API_BASE, { 
-                        method: 'GET',
-                        mode: 'cors',
-                        cache: 'no-cache',
-                        headers: {
-                            'Accept': 'application/json, text/plain, */*',
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    testResults.server = {
-                        status: response.ok ? 'success' : 'warning',
-                        message: `HTTP ${response.status}: ${response.statusText}`,
-                        details: `URL: ${response.url}`
-                    };
-                } catch (error) {
-                    testResults.server = {
-                        status: 'error',
-                        message: error.message,
-                        details: 'فشل في الوصول للخادم الأساسي'
-                    };
-                }
-                
-                // 2. اختبار endpoint البحث مع رقم وهمي
-                console.log('🔍 اختبار endpoint البحث...');
-                try {
-                    const searchUrl = `${API_BASE}/api/search/999999999`;
-                    const searchResponse = await fetchWithRetry(searchUrl);
-                    testResults.search = {
-                        status: 'success',
-                        message: 'البحث يعمل',
-                        details: `استجابة: ${JSON.stringify(searchResponse).substring(0, 100)}...`
-                    };
-                } catch (error) {
-                    testResults.search = {
-                        status: 'error',
-                        message: error.message,
-                        details: 'فشل في اختبار البحث'
-                    };
-                }
-                
-                // 3. اختبار endpoint التأكيد مع رقم وهمي
-                console.log('🔍 اختبار endpoint التأكيد...');
-                try {
-                    const confirmUrl = `${API_BASE}/api/confirm`;
-                    const confirmResponse = await fetchWithRetry(confirmUrl, {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            wasl_number: '999999999',
-                            force: false
-                        })
-                    });
-                    testResults.confirm = {
-                        status: 'success',
-                        message: 'التأكيد يعمل',
-                        details: `استجابة: ${JSON.stringify(confirmResponse).substring(0, 100)}...`
-                    };
-                } catch (error) {
-                    testResults.confirm = {
-                        status: 'error',
-                        message: error.message,
-                        details: 'فشل في اختبار التأكيد'
-                    };
-                }
-                
-                // 4. اختبار اتصال تيليجرام (اختياري)
-                console.log('🔍 اختبار اتصال تيليجرام...');
-                try {
-                    const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/getMe`;
-                    const telegramResponse = await fetch(telegramUrl);
-                    const telegramData = await telegramResponse.json();
-                    testResults.telegram = {
-                        status: telegramData.ok ? 'success' : 'error',
-                        message: telegramData.ok ? 'تيليجرام يعمل' : 'مشكلة في تيليجرام',
-                        details: telegramData.ok ? `Bot: ${telegramData.result.first_name}` : telegramData.description
-                    };
-                } catch (error) {
-                    testResults.telegram = {
-                        status: 'error',
-                        message: error.message,
-                        details: 'فشل في اختبار تيليجرام'
-                    };
-                }
-                
-            } catch (error) {
-                console.error('❌ خطأ في اختبار API:', error);
-                showModal('❌ خطأ في الاختبار', `
-                    <div class="error-message">
-                        <h3>❌ فشل في اختبار API</h3>
-                        <p><strong>الخطأ:</strong> ${error.message}</p>
-                        <p><strong>النوع:</strong> ${error.name}</p>
-                    </div>
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button onclick="closeModal()" class="btn btn-primary">إغلاق</button>
-                    </div>
-                `);
-            }
-            
-            // عرض النتائج
-            const formatResult = (result) => {
-                const icon = result.status === 'success' ? '✅' : result.status === 'warning' ? '⚠️' : '❌';
-                const color = result.status === 'success' ? '#28a745' : result.status === 'warning' ? '#ffc107' : '#dc3545';
-                return `
-                    <div style="margin: 10px 0; padding: 10px; border-left: 4px solid ${color}; background: rgba(${result.status === 'success' ? '40,167,69' : result.status === 'warning' ? '255,193,7' : '220,53,69'}, 0.1);">
-                        <div style="font-weight: bold;">${icon} ${result.message}</div>
-                        ${result.details ? `<div style="font-size: 12px; color: #666; margin-top: 5px;">${result.details}</div>` : ''}
-                    </div>
-                `;
-            };
-            
-            showModal('🔧 نتائج اختبار API', `
-                <div class="order-details">
-                    <h3>📊 نتائج الاختبار</h3>
-                    
-                    <h4>🌐 الخادم الأساسي:</h4>
-                    ${formatResult(testResults.server)}
-                    
-                    <h4>🔍 البحث (Search API):</h4>
-                    ${formatResult(testResults.search)}
-                    
-                    <h4>✅ التأكيد (Confirm API):</h4>
-                    ${formatResult(testResults.confirm)}
-                    
-                    <h4>📱 تيليجرام:</h4>
-                    ${formatResult(testResults.telegram)}
-                </div>
-                
-                <div class="order-details">
-                    <h3>🛠️ معلومات إضافية</h3>
-                    <div class="detail-row">
-                        <span class="detail-label">عنوان API:</span>
-                        <span class="detail-value">${API_BASE}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">وضع التشخيص:</span>
-                        <span class="detail-value">${DEBUG_MODE ? '🟢 مفعل' : '🔴 معطل'}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">المتصفح:</span>
-                        <span class="detail-value">${navigator.userAgent.split(' ')[0]}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">HTTPS:</span>
-                        <span class="detail-value">${window.location.protocol === 'https:' ? '✅ نعم' : '❌ لا'}</span>
-                    </div>
-                </div>
-                
-                <div class="order-details">
-                    <h3>🌐 معلومات الشبكة</h3>
-                    <div class="detail-row">
-                        <span class="detail-label">حالة الاتصال:</span>
-                        <span class="detail-value">${checkNetworkStatus().online ? '🟢 متصل' : '🔴 غير متصل'}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">نوع الاتصال:</span>
-                        <span class="detail-value">${checkNetworkStatus().effectiveType}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">سرعة التحميل:</span>
-                        <span class="detail-value">${checkNetworkStatus().downlink} Mbps</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">زمن الاستجابة:</span>
-                        <span class="detail-value">${checkNetworkStatus().rtt} ms</span>
-                    </div>
-                </div>
-                
-                <div style="text-align: center; margin-top: 20px;">
-                    <button onclick="closeModal()" class="btn btn-primary">إغلاق</button>
-                    <button onclick="testSpecificWasl()" class="btn" style="background: #28a745; color: white;">اختبار رقم محدد</button>
-                </div>
-            `);
-            
-            } catch (outerError) {
-                console.error('❌ خطأ شامل في دالة اختبار API:', outerError);
-                showModal('❌ خطأ في الاختبار', `
-                    <div class="error-message">
-                        <h3>❌ فشل في تشغيل اختبار API</h3>
-                        <p><strong>الخطأ:</strong> ${outerError.message}</p>
-                        <p><strong>النوع:</strong> ${outerError.name}</p>
-                        <p>يرجى فحص Console للمزيد من التفاصيل (F12)</p>
-                    </div>
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button onclick="closeModal()" class="btn btn-primary">إغلاق</button>
-                    </div>
-                `);
-            }
-        }
-        
-        /**
-         * اختبار رقم وصل محدد
-         */
-        function testSpecificWasl() {
-            showModal('🧪 اختبار رقم وصل محدد', `
-                <div class="order-details">
-                    <h3>📝 إدخال رقم الوصل للاختبار</h3>
-                    <p>يرجى إدخال رقم وصل حقيقي لاختبار الـ API:</p>
-                    <br>
-                    <input type="text" id="testWaslNumber" 
-                           placeholder="أدخل رقم الوصل للاختبار" 
-                           style="width: 100%; padding: 12px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; text-align: center; direction: ltr;"
-                           maxlength="20">
-                    <br><br>
-                    <div style="text-align: center;">
-                        <button onclick="runTestWasl()" class="btn btn-primary">🧪 اختبار</button>
-                        <button onclick="closeModal()" class="btn btn-camera">إلغاء</button>
-                    </div>
-                </div>
-            `);
-            
-            // التركيز على حقل الإدخال
-            setTimeout(() => {
-                const input = document.getElementById('testWaslNumber');
-                if (input) {
-                    input.focus();
-                }
-            }, 100);
-        }
-        
-        /**
-         * تشغيل اختبار رقم وصل محدد
-         */
-        async function runTestWasl() {
-            const input = document.getElementById('testWaslNumber');
-            if (!input) return;
-            
-            const waslNumber = input.value.trim();
-            if (!waslNumber) {
-                alert('يرجى إدخال رقم الوصل');
-                return;
-            }
-            
-            console.log('🧪 اختبار رقم الوصل:', waslNumber);
-            
-            // تفعيل وضع الاختبار
-            window.isTestMode = true;
-            
-            // إغلاق النافذة والبدء في الاختبار
-            closeModal();
-            
-            // تشغيل نفس دالة التحليل المستخدمة في المسح العادي
-            analyzeWasl(waslNumber, false);
-        }
-
         /**
          * معالجة الإدخال اليدوي
          */
