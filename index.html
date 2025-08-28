@@ -511,6 +511,7 @@
         <button id="torchBtn" class="btn btn-torch">🔦 الفلاش</button>
         <button id="manualBtn" class="btn btn-camera">✏️ إدخال يدوي</button>
         <button id="testApiBtn" class="btn" style="background: #17a2b8; color: white;">🔧 اختبار API</button>
+        <button id="simpleTestBtn" class="btn" style="background: #6c757d; color: white;" onclick="simpleApiTest()">🧪 اختبار سريع</button>
 
     </div>
     
@@ -569,7 +570,6 @@
         const cameraBtn = document.getElementById('cameraBtn');
         const torchBtn = document.getElementById('torchBtn');
         const manualBtn = document.getElementById('manualBtn');
-        const testBtn = document.getElementById('testBtn');
         const testApiBtn = document.getElementById('testApiBtn');
         const statusText = document.getElementById('statusText');
         const modal = document.getElementById('modal');
@@ -606,8 +606,18 @@
             cameraBtn.addEventListener('click', switchCamera);
             torchBtn.addEventListener('click', toggleTorch);
             manualBtn.addEventListener('click', () => showManualEntry());
-            testBtn.addEventListener('click', showTestMenu);
-            testApiBtn.addEventListener('click', testApiConnection);
+            
+            // التحقق من وجود زر اختبار API
+            if (testApiBtn) {
+                testApiBtn.addEventListener('click', function() {
+                    console.log('🔧 تم الضغط على زر اختبار API');
+                    testApiConnection();
+                });
+                console.log('✅ تم ربط زر اختبار API بنجاح');
+            } else {
+                console.error('❌ لم يتم العثور على زر اختبار API');
+            }
+            
             modalClose.addEventListener('click', closeModal);
             
             // إغلاق النافذة المنبثقة بالضغط خارجها
@@ -3082,6 +3092,25 @@
         }
         
         /**
+         * اختبار API سريع ومبسط
+         */
+        function simpleApiTest() {
+            console.log('🧪 اختبار API سريع');
+            alert('تم الضغط على الاختبار السريع! افحص Console (F12) للتفاصيل.');
+            
+            // اختبار بسيط جداً
+            fetch(API_BASE)
+                .then(response => {
+                    console.log('✅ استجابة الخادم:', response.status, response.statusText);
+                    alert(`استجابة الخادم: ${response.status} ${response.statusText}`);
+                })
+                .catch(error => {
+                    console.error('❌ خطأ:', error);
+                    alert(`خطأ: ${error.message}`);
+                });
+        }
+
+        /**
          * فحص حالة الشبكة
          */
         function checkNetworkStatus() {
@@ -3106,7 +3135,10 @@
          * اختبار الاتصال مع API
          */
         async function testApiConnection() {
-            showModal('🔧 اختبار الاتصال مع API...', `
+            console.log('🚀 بدء دالة اختبار API');
+            
+            try {
+                showModal('🔧 اختبار الاتصال مع API...', `
                 <div class="loading">
                     <div class="spinner"></div>
                     <p>جارِ اختبار الاتصال مع الخادم...</p>
@@ -3216,6 +3248,16 @@
                 
             } catch (error) {
                 console.error('❌ خطأ في اختبار API:', error);
+                showModal('❌ خطأ في الاختبار', `
+                    <div class="error-message">
+                        <h3>❌ فشل في اختبار API</h3>
+                        <p><strong>الخطأ:</strong> ${error.message}</p>
+                        <p><strong>النوع:</strong> ${error.name}</p>
+                    </div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button onclick="closeModal()" class="btn btn-primary">إغلاق</button>
+                    </div>
+                `);
             }
             
             // عرض النتائج
@@ -3292,6 +3334,21 @@
                     <button onclick="testSpecificWasl()" class="btn" style="background: #28a745; color: white;">اختبار رقم محدد</button>
                 </div>
             `);
+            
+            } catch (outerError) {
+                console.error('❌ خطأ شامل في دالة اختبار API:', outerError);
+                showModal('❌ خطأ في الاختبار', `
+                    <div class="error-message">
+                        <h3>❌ فشل في تشغيل اختبار API</h3>
+                        <p><strong>الخطأ:</strong> ${outerError.message}</p>
+                        <p><strong>النوع:</strong> ${outerError.name}</p>
+                        <p>يرجى فحص Console للمزيد من التفاصيل (F12)</p>
+                    </div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button onclick="closeModal()" class="btn btn-primary">إغلاق</button>
+                    </div>
+                `);
+            }
         }
         
         /**
