@@ -1819,10 +1819,10 @@
         }
         
         /**
-         * عرض تحذير بسيط لمحافظة كربلاء
+         * عرض تحذير بسيط لمحافظة كربلاء - إرسال تلقائي واستمرار المسح
          */
         function showKarbalaSimpleWarning(orderData, resumeScanning) {
-            console.log('🚨 عرض تحذير كربلاء البسيط');
+            console.log('🚨 عرض تحذير كربلاء البسيط - إرسال تلقائي');
             
             // اهتزاز للتنبيه
             if ('vibrate' in navigator) {
@@ -1870,9 +1870,14 @@
                     <p style="font-size: 15px; color: white; margin: 10px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
                         المحافظة: <span style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 6px;">${orderData.governorate || 'غير محدد'}</span>
                     </p>
-                    <p style="font-size: 14px; color: white; margin-top: 15px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
-                        تم تأكيد الطلب وإرساله لتيليجرام - هذا مجرد تنبيه للانتباه
-                    </p>
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+                        <p style="font-size: 16px; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
+                            ✅ تم الإرسال التلقائي لتيليجرام
+                        </p>
+                        <p style="font-size: 14px; color: white; margin-top: 10px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
+                            🔄 استمرار المسح خلال 3 ثوان
+                        </p>
+                    </div>
                 </div>
                 
                 <div style="text-align: center; margin-top: 20px;">
@@ -1887,7 +1892,7 @@
                         min-width: 150px;
                         box-shadow: 0 3px 10px rgba(0, 123, 255, 0.3);
                     ">
-                        استمرار المسح 🔍
+                        استمرار المسح الآن 🔍
                     </button>
                 </div>
                 
@@ -1907,11 +1912,17 @@
                 </style>
             `);
             
-            // حفظ البيانات للمتابعة
-            window.pendingKarbalaOrder = {
-                orderData: orderData,
-                resumeScanning: resumeScanning
-            };
+            // إغلاق تلقائي بعد 3 ثوان واستمرار المسح
+            setTimeout(() => {
+                closeModal();
+                if (resumeScanning) {
+                    console.log('🔄 استمرار المسح تلقائياً بعد تحذير كربلاء البسيط...');
+                    startScanning();
+                }
+            }, 3000);
+            
+            // استئناف المسح عند إغلاق النافذة يدوياً
+            modal.dataset.resumeScanning = resumeScanning.toString();
         }
         
         /**
@@ -2015,10 +2026,10 @@
         }
         
         /**
-         * التعامل مع تحذير كربلاء
+         * التعامل مع تحذير كربلاء - إرسال تلقائي واستمرار المسح
          */
-        function handleKarbalaWarning(orderData, resumeScanning, alreadyConfirmed = false) {
-            console.log('⚠️ تحذير: طلب من كربلاء!', orderData.recipient_area);
+        async function handleKarbalaWarning(orderData, resumeScanning, alreadyConfirmed = false) {
+            console.log('⚠️ تحذير: طلب من كربلاء! - إرسال تلقائي', orderData.recipient_area);
             
             // اهتزاز قوي للتنبيه
             if ('vibrate' in navigator) {
@@ -2045,60 +2056,146 @@
             
             const detailsHtml = formatOrderDetails(orderData);
             
-            // تحديد الرسالة والأزرار حسب حالة التأكيد
-            let warningMessage, buttons;
-            
-            if (alreadyConfirmed) {
-                // التأكيد تم بالفعل - نحتاج فقط لإرسال تيليجرام
-                warningMessage = `
-                    <div class="warning-message" style="background: #ff6b6b; color: white; border: 3px solid #ff4757; animation: flash 1s infinite;">
-                        <h3 style="color: white;">⚠️ تم التأكيد! طلب من كربلاء المقدسة!</h3>
-                        <p style="font-size: 18px; font-weight: bold; color: white;">
-                            تم تأكيد الطلب بنجاح. يرجى مراجعة المعلومات قبل الإرسال لتيليجرام
-                        </p>
-                    </div>`;
-                
-                buttons = `
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button onclick="proceedWithKarbalaOrderConfirmed()" class="btn" style="background: #28a745; color: white; font-weight: bold;">إرسال لتيليجرام</button>
-                        <button onclick="closeModal()" class="btn btn-camera">إلغاء</button>
-                    </div>`;
-            } else {
-                // التأكيد لم يتم بعد
-                warningMessage = `
-                    <div class="warning-message" style="background: #ff6b6b; color: white; border: 3px solid #ff4757; animation: flash 1s infinite;">
-                        <h3 style="color: white;">⚠️ انتبه: هذا الطلب من محافظة كربلاء المقدسة!</h3>
-                        <p style="font-size: 18px; font-weight: bold; color: white;">
-                            يرجى التأكد من المعلومات والتعامل بحذر خاص
-                        </p>
-                    </div>`;
-                
-                buttons = `
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button onclick="proceedWithKarbalaOrder()" class="btn" style="background: #ff4757; color: white; font-weight: bold;">متابعة التأكيد</button>
-                        <button onclick="closeModal()" class="btn btn-camera">إلغاء</button>
-                    </div>`;
-            }
-            
+            // عرض تحذير مع إرسال تلقائي
             showModal('🚨 تحذير: طلب من كربلاء! 🚨', `
-                ${warningMessage}
+                <div class="warning-message" style="
+                    background: linear-gradient(135deg, #ff4757, #ff3742);
+                    color: white;
+                    border: 3px solid #ff1744;
+                    border-radius: 15px;
+                    padding: 20px;
+                    text-align: center;
+                    animation: karbalaFlash 2s infinite;
+                    box-shadow: 0 0 25px rgba(255, 71, 87, 0.4);
+                ">
+                    <h3 style="color: white; font-size: 20px; margin-bottom: 15px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
+                        ⚠️ تحذير: طلب من كربلاء المقدسة!
+                    </h3>
+                    <p style="font-size: 16px; font-weight: bold; color: white; margin: 10px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
+                        رقم الوصل: <span style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 6px;">${orderData.wasl_number}</span>
+                    </p>
+                    <p style="font-size: 15px; color: white; margin: 10px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
+                        المنطقة: <span style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 6px;">${orderData.recipient_area || 'غير محدد'}</span>
+                    </p>
+                    <p style="font-size: 15px; color: white; margin: 10px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
+                        المحافظة: <span style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 6px;">${orderData.governorate || 'غير محدد'}</span>
+                    </p>
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+                        <p style="font-size: 16px; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
+                            📤 جارِ الإرسال التلقائي لتيليجرام...
+                        </p>
+                        <p style="font-size: 14px; color: white; margin-top: 10px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
+                            🔄 استمرار المسح خلال 3 ثوان
+                        </p>
+                    </div>
+                </div>
+                
                 ${detailsHtml}
-                ${buttons}
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="closeModal(); resumeScanning();" class="btn" style="
+                        background: linear-gradient(135deg, #007bff, #0056b3);
+                        color: white;
+                        font-weight: bold;
+                        border: 2px solid #004085;
+                        padding: 15px 25px;
+                        font-size: 16px;
+                        border-radius: 8px;
+                        min-width: 150px;
+                        box-shadow: 0 3px 10px rgba(0, 123, 255, 0.3);
+                    ">
+                        استمرار المسح الآن 🔍
+                    </button>
+                </div>
                 
                 <style>
-                    @keyframes flash {
-                        0%, 50% { opacity: 1; }
-                        25%, 75% { opacity: 0.7; }
+                    @keyframes karbalaFlash {
+                        0%, 100% { 
+                            opacity: 1; 
+                            transform: scale(1);
+                            box-shadow: 0 0 25px rgba(255, 71, 87, 0.4);
+                        }
+                        50% { 
+                            opacity: 0.9; 
+                            transform: scale(1.01);
+                            box-shadow: 0 0 30px rgba(255, 71, 87, 0.6);
+                        }
                     }
                 </style>
             `);
             
-            // حفظ بيانات الطلب لاستخدامها عند المتابعة
-            window.pendingKarbalaOrder = {
-                orderData: orderData,
-                resumeScanning: resumeScanning,
-                alreadyConfirmed: alreadyConfirmed
-            };
+            // إرسال تلقائي لتيليجرام في الخلفية
+            setTimeout(async () => {
+                try {
+                    console.log('📤 بدء الإرسال التلقائي لتيليجرام...');
+                    
+                    if (alreadyConfirmed) {
+                        // الطلب تم تأكيده بالفعل - إرسال مباشر
+                        const imageBlob = window.capturedImageBlob || await captureFrameAsBlob();
+                        await sendToTelegram(orderData.wasl_number, orderData, imageBlob);
+                        console.log('✅ تم الإرسال التلقائي لتيليجرام بنجاح');
+                    } else {
+                        // طلب جديد يحتاج تأكيد ثم إرسال
+                        await autoConfirmAndSendKarbala(orderData, resumeScanning);
+                    }
+                } catch (error) {
+                    console.error('❌ خطأ في الإرسال التلقائي:', error);
+                }
+            }, 500);
+            
+            // إغلاق تلقائي بعد 3 ثوان واستمرار المسح
+            setTimeout(() => {
+                closeModal();
+                if (resumeScanning) {
+                    console.log('🔄 استمرار المسح تلقائياً بعد تحذير كربلاء...');
+                    startScanning();
+                }
+            }, 3000);
+            
+            // استئناف المسح عند إغلاق النافذة يدوياً
+            modal.dataset.resumeScanning = resumeScanning.toString();
+        }
+        
+        /**
+         * تأكيد وإرسال تلقائي لطلبات كربلاء
+         */
+        async function autoConfirmAndSendKarbala(orderData, resumeScanning) {
+            console.log('⚡ تأكيد وإرسال تلقائي لطلب كربلاء:', orderData.wasl_number);
+            
+            try {
+                // فحص التكرار أولاً
+                if (orderData.duplicate || orderData.is_duplicate) {
+                    console.log('🔄 طلب كربلاء مكرر - لن يتم الإرسال');
+                    return;
+                }
+                
+                // محاولة التأكيد
+                const confirmData = {
+                    wasl_number: orderData.wasl_number,
+                    force: false
+                };
+                
+                const confirmResult = await fetchWithRetryFast(`${API_BASE}/api/confirm`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(confirmData)
+                });
+                
+                if (confirmResult.success) {
+                    // نجح التأكيد - إرسال لتيليجرام
+                    console.log('✅ تم تأكيد طلب كربلاء تلقائياً');
+                    const imageBlob = window.capturedImageBlob || await captureFrameAsBlob();
+                    await sendToTelegram(orderData.wasl_number, orderData, imageBlob);
+                    console.log('✅ تم الإرسال التلقائي لتيليجرام بنجاح');
+                } else {
+                    console.warn('⚠️ فشل التأكيد التلقائي لطلب كربلاء:', confirmResult.message);
+                }
+                
+            } catch (error) {
+                console.error('❌ خطأ في التأكيد والإرسال التلقائي لكربلاء:', error);
+            }
         }
         
         /**
