@@ -953,7 +953,7 @@
 
                 // البحث في API
                 const orderData = await searchOrder(barcodeData);
-                
+                let isConfirmed = false;
                 if (orderData) {
                     // التحقق من حالة الطلب أولاً
                     if (orderData.status === 'مؤكد' || orderData.auto_confirmed) {
@@ -961,6 +961,7 @@
                         await displayOrderResult(orderData, barcodeData);
                         updateStatus('🔄 تنبيه: طلب مؤكد مسبقاً - لم يتم الإرسال للتليجرام', 'warning');
                         stats.error++; // اعتباره خطأ لأنه طلب مؤكد مسبقاً
+                        isConfirmed = true;
                     } else {
                         // طلب جديد غير مؤكد - معالجة عادية
                         await displayOrderResult(orderData, barcodeData);
@@ -973,13 +974,16 @@
                     updateStatus('لم يتم العثور على الطلب - جاهز لمسح باركود جديد', 'warning');
                     stats.error++;
                 }
-
             } catch (error) {
                 updateStatus('خطأ في معالجة الباركود: ' + error.message, 'error');
                 stats.error++;
             } finally {
                 showLoading(false);
                 updateStats();
+                // الرجوع التلقائي للكاميرا بعد 1.5 ثانية من عرض النتيجة
+                setTimeout(() => {
+                    updateStatus('جاهز لمسح باركود جديد', 'info');
+                }, 1500);
             }
         }
 
@@ -1000,10 +1004,12 @@
         async function displayOrderResult(orderData, barcodeData) {
             const formatValue = (value) => value || 'غير محدد';
             
+
+            // رقم تسلسلي للنتيجة
+            const serialNumber = scanResults.length + 1;
             // تحديد الحالة مع الإيموجي المناسب
             let statusText = '⚠️ غير مؤكد';
             let statusClass = 'pending';
-            
             if (orderData.status === 'مؤكد' || orderData.auto_confirmed) {
                 statusText = '✅ مؤكد';
                 statusClass = 'confirmed';
@@ -1017,22 +1023,19 @@
                 statusText = '📦 مسلم';
                 statusClass = 'confirmed';
             }
-            
+            const isAlreadyConfirmed = orderData.status === 'مؤكد' || orderData.auto_confirmed;
+            const scanTime = new Date().toLocaleString('ar-IQ');
             const resultId = `result-${Date.now()}`;
             const resultElement = document.createElement('div');
             resultElement.className = 'result-item';
             resultElement.id = resultId;
-            
-            // إضافة فئة خاصة للطلبات المؤكدة مسبقاً
-            const isAlreadyConfirmed = orderData.status === 'مؤكد' || orderData.auto_confirmed;
             if (isAlreadyConfirmed) {
                 resultElement.style.borderLeft = '4px solid var(--warning-color)';
                 resultElement.style.background = '#fffbeb';
             }
-            
             resultElement.innerHTML = `
                 <div class="result-header">
-                    <div class="result-id">رقم الوصل: ${formatValue(orderData.wasl_number)}</div>
+                    <div class="result-id">#${serialNumber} | رقم الوصل: ${formatValue(orderData.wasl_number)}</div>
                     <div class="result-status ${statusClass}">${statusText}</div>
                 </div>
                 ${isAlreadyConfirmed ? `
@@ -1105,7 +1108,7 @@
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">وقت المسح:</span>
-                        <span class="detail-value">${new Date().toLocaleString('ar-IQ')}</span>
+                        <span class="detail-value">${scanTime}</span>
                     </div>
                     ${isAlreadyConfirmed ? `
                     <div class="detail-item">
