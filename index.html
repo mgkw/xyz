@@ -530,6 +530,82 @@
             transform: translateY(0);
         }
 
+        /* Alert Popup for Confirmed Orders */
+        .confirmed-alert {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fffbeb;
+            border: 2px solid var(--warning-color);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow-xl);
+            z-index: 10000;
+            text-align: center;
+            max-width: 400px;
+            display: none;
+            animation: popIn 0.3s ease-out;
+        }
+
+        .confirmed-alert.show {
+            display: block;
+        }
+
+        .confirmed-alert-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            display: none;
+        }
+
+        .confirmed-alert-backdrop.show {
+            display: block;
+        }
+
+        .confirmed-alert h3 {
+            color: var(--warning-color);
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .confirmed-alert p {
+            color: #92400e;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .confirmed-alert-btn {
+            background: var(--warning-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .confirmed-alert-btn:hover {
+            background: #d97706;
+            transform: translateY(-1px);
+        }
+
+        @keyframes popIn {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
         /* Responsive Design */
         @media (min-width: 768px) {
             .app-container {
@@ -723,6 +799,14 @@
     <!-- Telegram Status -->
     <div class="telegram-status" id="telegramStatus"></div>
 
+    <!-- Confirmed Order Alert -->
+    <div class="confirmed-alert-backdrop" id="confirmedAlertBackdrop"></div>
+    <div class="confirmed-alert" id="confirmedAlert">
+        <h3>🔄 تنبيه: طلب مؤكد مسبقاً</h3>
+        <p>هذا الطلب مؤكد مسبقاً ولم يتم إرساله للتليجرام. يمكنك الآن مسح وصل جديد.</p>
+        <button class="confirmed-alert-btn" onclick="closeConfirmedAlert()">متابعة المسح</button>
+    </div>
+
     <canvas id="canvas" style="display: none;"></canvas>
 
     <script>
@@ -796,6 +880,9 @@
             elements.stopBtn.addEventListener('click', stopScanning);
             elements.switchCameraBtn.addEventListener('click', switchCamera);
             elements.flashBtn.addEventListener('click', toggleFlash);
+            
+            // إضافة مستمع لإغلاق التنبيه بالنقر على الخلفية
+            document.getElementById('confirmedAlertBackdrop').addEventListener('click', closeConfirmedAlert);
         }
 
         async function startScanning() {
@@ -953,15 +1040,17 @@
 
                 // البحث في API
                 const orderData = await searchOrder(barcodeData);
-                let isConfirmed = false;
+                
+                // إخفاء شاشة التحميل أولاً
+                showLoading(false);
+                
                 if (orderData) {
                     // التحقق من حالة الطلب أولاً
                     if (orderData.status === 'مؤكد' || orderData.auto_confirmed) {
-                        // طلب مؤكد مسبقاً - عرض تنبيه فقط بدون إرسال للتليجرام
+                        // طلب مؤكد مسبقاً - عرض تنبيه منبثق فقط بدون إرسال للتليجرام
                         await displayOrderResult(orderData, barcodeData);
-                        updateStatus('🔄 تنبيه: طلب مؤكد مسبقاً - لم يتم الإرسال للتليجرام', 'warning');
+                        showConfirmedAlert(); // عرض التنبيه المنبثق
                         stats.error++; // اعتباره خطأ لأنه طلب مؤكد مسبقاً
-                        isConfirmed = true;
                     } else {
                         // طلب جديد غير مؤكد - معالجة عادية
                         await displayOrderResult(orderData, barcodeData);
@@ -975,15 +1064,15 @@
                     stats.error++;
                 }
             } catch (error) {
+                showLoading(false);
                 updateStatus('خطأ في معالجة الباركود: ' + error.message, 'error');
                 stats.error++;
             } finally {
-                showLoading(false);
                 updateStats();
-                // الرجوع التلقائي للكاميرا بعد 1.5 ثانية من عرض النتيجة
+                // الرجوع التلقائي للكاميرا بعد ثانية واحدة من عرض النتيجة
                 setTimeout(() => {
                     updateStatus('جاهز لمسح باركود جديد', 'info');
-                }, 1500);
+                }, 1000);
             }
         }
 
@@ -1374,6 +1463,33 @@ ${orderData.status === 'مؤكد' || orderData.auto_confirmed ? '🔄 تنبيه
             } catch (error) {
                 // تجاهل أخطاء الصوت
             }
+        }
+
+        // دالة عرض تنبيه الطلب المؤكد مسبقاً
+        function showConfirmedAlert() {
+            const alertBackdrop = document.getElementById('confirmedAlertBackdrop');
+            const alert = document.getElementById('confirmedAlert');
+            
+            alertBackdrop.classList.add('show');
+            alert.classList.add('show');
+            
+            updateStatus('🔄 تنبيه: طلب مؤكد مسبقاً - لم يتم الإرسال للتليجرام', 'warning');
+            
+            // إغلاق التنبيه تلقائياً بعد 4 ثواني
+            setTimeout(() => {
+                closeConfirmedAlert();
+            }, 4000);
+        }
+
+        // دالة إغلاق تنبيه الطلب المؤكد
+        function closeConfirmedAlert() {
+            const alertBackdrop = document.getElementById('confirmedAlertBackdrop');
+            const alert = document.getElementById('confirmedAlert');
+            
+            alertBackdrop.classList.remove('show');
+            alert.classList.remove('show');
+            
+            updateStatus('جاهز لمسح باركود جديد', 'info');
         }
 
         // دالة مسح جميع النتائج
