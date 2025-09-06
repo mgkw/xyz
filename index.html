@@ -2,7 +2,10 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>مسح الباركود - نظام إدارة المخزون</title>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
     <style>
@@ -21,6 +24,9 @@
             align-items: center;
             padding: 20px;
             color: #333;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
         }
 
         .header {
@@ -125,11 +131,10 @@
         }
 
         .controls {
-            display: flex;
-            justify-content: space-around;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
             gap: 15px;
             margin-bottom: 20px;
-            flex-wrap: wrap;
         }
 
         .control-btn {
@@ -220,6 +225,16 @@
 
         .result-value {
             color: #212529;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+        }
+
+        .result-value a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+            word-break: break-all;
         }
 
         .telegram-status {
@@ -246,10 +261,20 @@
             display: none;
             text-align: center;
             padding: 20px;
+            position: relative;
+            z-index: 1000;
         }
 
         .loading.show {
             display: block;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            min-width: 200px;
         }
 
         .spinner {
@@ -293,26 +318,245 @@
             font-size: 0.9em;
         }
 
-        @media (max-width: 768px) {
+        /* تحسينات للهواتف الصغيرة */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
             .header h1 {
-                font-size: 2em;
+                font-size: 1.8em;
+                margin-bottom: 5px;
+            }
+            
+            .header p {
+                font-size: 0.9em;
+            }
+            
+            .scanner-container {
+                padding: 15px;
+                border-radius: 15px;
             }
             
             .video-container {
-                height: 300px;
+                height: 250px;
+                border-radius: 10px;
+                margin-bottom: 15px;
             }
             
             .scan-frame {
-                width: 200px;
-                height: 120px;
+                width: 180px;
+                height: 100px;
+                border-width: 2px;
+            }
+            
+            .scan-frame::before,
+            .scan-frame::after {
+                width: 25px;
+                height: 25px;
+                border-width: 3px;
             }
             
             .controls {
-                flex-direction: column;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                margin-bottom: 15px;
             }
             
             .control-btn {
-                width: 100%;
+                padding: 10px 15px;
+                font-size: 12px;
+            }
+            
+            .status {
+                padding: 12px;
+                font-size: 14px;
+                margin-bottom: 15px;
+            }
+            
+            .result-container {
+                padding: 15px;
+                margin-top: 15px;
+            }
+            
+            .result-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+                padding: 10px 0;
+            }
+            
+            .result-label {
+                font-size: 14px;
+            }
+            
+            .result-value {
+                font-size: 14px;
+                word-break: break-all;
+            }
+            
+            .stats {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+                margin-top: 15px;
+            }
+            
+            .stat-card {
+                padding: 10px;
+            }
+            
+            .stat-number {
+                font-size: 1.5em;
+            }
+            
+            .stat-label {
+                font-size: 0.8em;
+            }
+        }
+
+        /* تحسينات للهواتف المتوسطة */
+        @media (min-width: 481px) and (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2.2em;
+            }
+            
+            .scanner-container {
+                padding: 18px;
+            }
+            
+            .video-container {
+                height: 320px;
+            }
+            
+            .scan-frame {
+                width: 220px;
+                height: 130px;
+            }
+            
+            .controls {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+            
+            .control-btn {
+                padding: 11px 18px;
+                font-size: 13px;
+            }
+            
+            .result-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            
+            .stats {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 12px;
+            }
+        }
+
+        /* تحسينات للتابلت */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .scanner-container {
+                max-width: 700px;
+            }
+            
+            .video-container {
+                height: 450px;
+            }
+            
+            .scan-frame {
+                width: 280px;
+                height: 170px;
+            }
+            
+            .controls {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        /* تحسينات عامة للشاشات اللمسية */
+        @media (pointer: coarse) {
+            .control-btn {
+                min-height: 44px;
+                touch-action: manipulation;
+            }
+            
+            .result-value a {
+                min-height: 44px;
+                display: inline-block;
+                line-height: 44px;
+                padding: 0 10px;
+            }
+        }
+
+        /* تحسينات للشاشات العمودية */
+        @media (orientation: portrait) {
+            .controls {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+        }
+
+        /* تحسينات للشاشات الأفقية على الهواتف */
+        @media (orientation: landscape) and (max-height: 500px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header {
+                margin-bottom: 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+                margin-bottom: 5px;
+            }
+            
+            .video-container {
+                height: 200px;
+            }
+            
+            .scan-frame {
+                width: 160px;
+                height: 90px;
+            }
+            
+            .scanner-container {
+                padding: 10px;
+            }
+            
+            .controls {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 8px;
+                margin-bottom: 10px;
+            }
+            
+            .control-btn {
+                padding: 8px 12px;
+                font-size: 11px;
+            }
+            
+            .status {
+                padding: 8px;
+                font-size: 13px;
+                margin-bottom: 10px;
+            }
+            
+            .result-container {
+                max-height: 150px;
+                overflow-y: auto;
+            }
+            
+            .stats {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+                margin-top: 10px;
             }
         }
     </style>
