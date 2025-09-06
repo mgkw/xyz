@@ -955,10 +955,19 @@
                 const orderData = await searchOrder(barcodeData);
                 
                 if (orderData) {
-                    await displayOrderResult(orderData, barcodeData);
-                    await sendToTelegram(orderData, barcodeData);
-                    stats.success++;
-                    updateStatus('تم إتمام المعالجة بنجاح - جاهز لمسح باركود جديد', 'success');
+                    // التحقق من حالة الطلب أولاً
+                    if (orderData.status === 'مؤكد' || orderData.auto_confirmed) {
+                        // طلب مؤكد مسبقاً - عرض تنبيه فقط بدون إرسال للتليجرام
+                        await displayOrderResult(orderData, barcodeData);
+                        updateStatus('🔄 تنبيه: طلب مؤكد مسبقاً - لم يتم الإرسال للتليجرام', 'warning');
+                        stats.error++; // اعتباره خطأ لأنه طلب مؤكد مسبقاً
+                    } else {
+                        // طلب جديد غير مؤكد - معالجة عادية
+                        await displayOrderResult(orderData, barcodeData);
+                        await sendToTelegram(orderData, barcodeData);
+                        stats.success++;
+                        updateStatus('تم إتمام المعالجة بنجاح - جاهز لمسح باركود جديد', 'success');
+                    }
                 } else {
                     await displayNotFoundResult(barcodeData);
                     updateStatus('لم يتم العثور على الطلب - جاهز لمسح باركود جديد', 'warning');
@@ -1014,11 +1023,23 @@
             resultElement.className = 'result-item';
             resultElement.id = resultId;
             
+            // إضافة فئة خاصة للطلبات المؤكدة مسبقاً
+            const isAlreadyConfirmed = orderData.status === 'مؤكد' || orderData.auto_confirmed;
+            if (isAlreadyConfirmed) {
+                resultElement.style.borderLeft = '4px solid var(--warning-color)';
+                resultElement.style.background = '#fffbeb';
+            }
+            
             resultElement.innerHTML = `
                 <div class="result-header">
                     <div class="result-id">رقم الوصل: ${formatValue(orderData.wasl_number)}</div>
                     <div class="result-status ${statusClass}">${statusText}</div>
                 </div>
+                ${isAlreadyConfirmed ? `
+                <div style="background: #fef3c7; padding: 10px; border-radius: 8px; margin-bottom: 12px; text-align: center; color: #92400e; font-weight: 600;">
+                    🔄 تنبيه: طلب مؤكد مسبقاً - لم يتم الإرسال للتليجرام
+                </div>
+                ` : ''}
                 <div class="result-details">
                     <div class="detail-item">
                         <span class="detail-label">رقم الطلب:</span>
@@ -1086,6 +1107,21 @@
                         <span class="detail-label">وقت المسح:</span>
                         <span class="detail-value">${new Date().toLocaleString('ar-IQ')}</span>
                     </div>
+                    ${isAlreadyConfirmed ? `
+                    <div class="detail-item">
+                        <span class="detail-label">حالة الإرسال:</span>
+                        <span class="detail-value" style="color: var(--warning-color); font-weight: 600;">
+                            ❌ لم يتم الإرسال للتليجرام (طلب مؤكد مسبقاً)
+                        </span>
+                    </div>
+                    ` : `
+                    <div class="detail-item">
+                        <span class="detail-label">حالة الإرسال:</span>
+                        <span class="detail-value" style="color: var(--success-color); font-weight: 600;">
+                            ✅ تم الإرسال للتليجرام بنجاح
+                        </span>
+                    </div>
+                    `}
                 </div>
             `;
 
