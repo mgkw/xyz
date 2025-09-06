@@ -65,6 +65,17 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transform: scaleX(-1); /* مرآة للكاميرا الأمامية */
+        }
+
+        /* إصلاح عرض الكاميرا على الهواتف */
+        @media (max-width: 768px) {
+            #video {
+                object-fit: cover;
+                object-position: center;
+                width: 100%;
+                height: 100%;
+            }
         }
 
         .scan-overlay {
@@ -261,12 +272,6 @@
             display: none;
             text-align: center;
             padding: 20px;
-            position: relative;
-            z-index: 1000;
-        }
-
-        .loading.show {
-            display: block;
             position: fixed;
             top: 50%;
             left: 50%;
@@ -275,6 +280,28 @@
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             min-width: 200px;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        /* خلفية شفافة للتحميل */
+        .loading-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9998;
+        }
+
+        .loading-backdrop.show {
+            display: block;
         }
 
         .spinner {
@@ -586,13 +613,19 @@
             🔍 اضغط "بدء المسح" لبدء مسح الباركود
         </div>
 
+        <div class="loading-backdrop" id="loadingBackdrop"></div>
         <div class="loading" id="loading">
             <div class="spinner"></div>
             <p>جاري معالجة البيانات...</p>
         </div>
 
         <div class="result-container" id="resultContainer">
-            <h3>📊 تفاصيل الطلب</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3>📊 تفاصيل الطلب</h3>
+                <button onclick="clearResults()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px;">
+                    🗑️ مسح النتائج
+                </button>
+            </div>
             <div id="resultContent"></div>
             <div class="telegram-status" id="telegramStatus"></div>
         </div>
@@ -638,6 +671,7 @@
         const stopBtn = document.getElementById('stopBtn');
         const status = document.getElementById('status');
         const loading = document.getElementById('loading');
+        const loadingBackdrop = document.getElementById('loadingBackdrop');
         const resultContainer = document.getElementById('resultContainer');
         const resultContent = document.getElementById('resultContent');
         const telegramStatus = document.getElementById('telegramStatus');
@@ -693,9 +727,10 @@
                 const constraints = {
                     video: {
                         deviceId: cameras[currentCameraIndex]?.deviceId,
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 },
-                        facingMode: currentCameraIndex === 0 ? 'environment' : 'user'
+                        width: { ideal: 1920, max: 1920 },
+                        height: { ideal: 1080, max: 1080 },
+                        facingMode: currentCameraIndex === 0 ? 'environment' : 'user',
+                        frameRate: { ideal: 30, max: 30 }
                     }
                 };
 
@@ -704,9 +739,12 @@
 
                 await new Promise(resolve => {
                     video.onloadedmetadata = () => {
-                        canvas.width = video.videoWidth;
-                        canvas.height = video.videoHeight;
-                        resolve();
+                        // تأكد من أن الفيديو جاهز للعرض
+                        video.play().then(() => {
+                            canvas.width = video.videoWidth;
+                            canvas.height = video.videoHeight;
+                            resolve();
+                        }).catch(resolve); // متابعة حتى لو فشل التشغيل التلقائي
                     };
                 });
 
@@ -716,14 +754,22 @@
                 switchCameraBtn.disabled = false;
                 
                 // تفعيل الفلاش إذا كان متاحاً
-                if (stream.getVideoTracks()[0].getCapabilities().torch) {
-                    flashBtn.disabled = false;
+                try {
+                    const track = stream.getVideoTracks()[0];
+                    if (track && track.getCapabilities().torch) {
+                        flashBtn.disabled = false;
+                    }
+                } catch (e) {
+                    // تجاهل أخطاء الفلاش
                 }
 
                 updateStatus('📱 المسح نشط - وجه الكاميرا نحو الباركود', 'success');
                 showLoading(false);
                 
-                requestAnimationFrame(scanBarcode);
+                // انتظار قصير للتأكد من استقرار الفيديو
+                setTimeout(() => {
+                    requestAnimationFrame(scanBarcode);
+                }, 500);
                 
             } catch (error) {
                 showLoading(false);
@@ -833,7 +879,7 @@
                     await displayOrderResult(orderData);
                     await sendToTelegram(orderData, barcodeData);
                     stats.success++;
-                    updateStatus('✅ تم إتمام المعالجة بنجاح', 'success');
+                    updateStatus('✅ تم إتمام المعالجة بنجاح - النتائج معروضة أدناه', 'success');
                 } else {
                     updateStatus('⚠️ لم يتم العثور على الطلب في النظام', 'warning');
                     stats.error++;
@@ -850,8 +896,8 @@
                 setTimeout(() => {
                     isProcessing = false;
                     lastScannedCode = '';
-                    updateStatus('🔍 جاهز لمسح باركود جديد', 'info');
-                }, 2000); // انتظار ثانيتين قبل السماح بمسح جديد
+                    updateStatus('🔍 جاهز لمسح باركود جديد - النتائج السابقة لا تزال معروضة', 'info');
+                }, 3000); // انتظار 3 ثواني قبل السماح بمسح جديد
             }
         }
 
@@ -885,6 +931,9 @@
             }
             
             const html = `
+                <div style="background: #e8f5e8; padding: 10px; border-radius: 5px; margin-bottom: 15px; text-align: center;">
+                    <strong>✅ تم العثور على الطلب بنجاح!</strong>
+                </div>
                 <div class="result-item">
                     <span class="result-label">رقم الوصل:</span>
                     <span class="result-value">${formatValue(orderData.wasl_number)}</span>
@@ -951,10 +1000,18 @@
                         </a>
                     </span>
                 </div>
+                <div style="background: #f0f8ff; padding: 10px; border-radius: 5px; margin-top: 15px; text-align: center; font-size: 14px;">
+                    📝 <strong>ملاحظة:</strong> تم إرسال هذه البيانات إلى التيليجرام تلقائياً
+                </div>
             `;
 
             resultContent.innerHTML = html;
             resultContainer.classList.add('show');
+            
+            // التمرير إلى النتائج
+            setTimeout(() => {
+                resultContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
         }
 
         async function sendToTelegram(orderData, barcodeData) {
@@ -1100,6 +1157,7 @@ ${orderData.status === 'مؤكد' || orderData.auto_confirmed ? '🔄 تنبيه
 
         function showLoading(show) {
             loading.classList.toggle('show', show);
+            loadingBackdrop.classList.toggle('show', show);
         }
 
         function updateStats() {
@@ -1138,6 +1196,13 @@ ${orderData.status === 'مؤكد' || orderData.auto_confirmed ? '🔄 تنبيه
                 updateStats();
             }
         });
+
+        // دالة مسح النتائج
+        function clearResults() {
+            resultContainer.classList.remove('show');
+            resultContent.innerHTML = '';
+            updateStatus('🔍 تم مسح النتائج - جاهز للمسح', 'info');
+        }
 
         // إيقاف المسح عند إغلاق الصفحة
         window.addEventListener('beforeunload', () => {
