@@ -996,6 +996,10 @@
                     <i class="fas fa-camera"></i>
                     تغيير الكاميرا
                 </button>
+                <button class="control-btn warning" id="retryBtn" style="display: none;">
+                    <i class="fas fa-redo"></i>
+                    إعادة المحاولة
+                </button>
                 <button class="control-btn" id="flashBtn" disabled>
                     <i class="fas fa-flashlight"></i>
                     الفلاش
@@ -1161,6 +1165,7 @@
         const elements = {
             startBtn: document.getElementById('startBtn'),
             rotateCameraBtn: document.getElementById('rotateCameraBtn'),
+            retryBtn: document.getElementById('retryBtn'),
             flashBtn: document.getElementById('flashBtn'),
             stopBtn: document.getElementById('stopBtn'),
             statusSection: document.getElementById('statusSection'),
@@ -1195,28 +1200,69 @@
 
         async function initializeApp() {
             try {
+                // فحص دعم المتصفح للوسائط
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('المتصفح لا يدعم الوصول إلى الكاميرا. يرجى استخدام متصفح حديث');
+                }
+
+                // فحص دعم jsQR
+                if (typeof jsQR === 'undefined') {
+                    throw new Error('مكتبة jsQR غير محملة. يرجى التحقق من الاتصال بالإنترنت');
+                }
+
+                updateStatus('جاري تهيئة الكاميرا...', 'info');
                 await getCameras();
                 setupEventListeners();
-                updateStatus('اضغط "بدء المسح" لبدء مسح الباركود', 'info');
+                updateStatus('تم تهيئة التطبيق بنجاح - اضغط "بدء المسح" لبدء مسح الباركود', 'success');
+                
             } catch (error) {
+                console.error('خطأ في تهيئة التطبيق:', error);
                 updateStatus('خطأ في تهيئة التطبيق: ' + error.message, 'error');
+                
+                // عرض حلول مقترحة
+                showTroubleshootingTips(error.message);
             }
         }
 
         async function getCameras() {
             try {
+                // طلب إذن الوصول إلى الكاميرا أولاً
+                await navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(stream => {
+                        // إيقاف الكاميرا المؤقتة
+                        stream.getTracks().forEach(track => track.stop());
+                    });
+
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 cameras = devices.filter(device => device.kind === 'videoinput');
                 
+                console.log('الكاميرات المتاحة:', cameras);
+                
                 if (cameras.length === 0) {
-                    throw new Error('لم يتم العثور على كاميرا');
+                    throw new Error('لم يتم العثور على كاميرا متاحة');
                 }
                 
+                // إخفاء زر تغيير الكاميرا إذا كان هناك كاميرا واحدة فقط
                 if (cameras.length === 1) {
-                    elements.switchCameraBtn.style.display = 'none';
+                    elements.rotateCameraBtn.style.display = 'none';
                 }
+                
+                updateStatus(`تم العثور على ${cameras.length} كاميرا`, 'success');
+                
             } catch (error) {
-                throw new Error('لا يمكن الوصول إلى الكاميرا');
+                console.error('خطأ في الوصول للكاميرا:', error);
+                
+                if (error.name === 'NotAllowedError') {
+                    throw new Error('تم رفض الإذن للوصول إلى الكاميرا. يرجى السماح بالوصول وإعادة تحميل الصفحة');
+                } else if (error.name === 'NotFoundError') {
+                    throw new Error('لم يتم العثور على كاميرا متصلة بالجهاز');
+                } else if (error.name === 'NotSupportedError') {
+                    throw new Error('المتصفح لا يدعم الوصول إلى الكاميرا');
+                } else if (error.name === 'NotReadableError') {
+                    throw new Error('الكاميرا مستخدمة من تطبيق آخر');
+                } else {
+                    throw new Error('خطأ غير معروف في الوصول إلى الكاميرا: ' + error.message);
+                }
             }
         }
 
@@ -1224,6 +1270,7 @@
             elements.startBtn.addEventListener('click', startScanning);
             elements.stopBtn.addEventListener('click', stopScanning);
             elements.rotateCameraBtn.addEventListener('click', rotateCamera);
+            elements.retryBtn.addEventListener('click', retryInitialization);
             elements.flashBtn.addEventListener('click', toggleFlash);
             
             // مستمعي أحداث الطابور
@@ -1235,9 +1282,111 @@
             document.getElementById('confirmedAlertBackdrop').addEventListener('click', closeConfirmedAlert);
         }
 
+        // إعادة تهيئة التطبيق
+        async function retryInitialization() {
+            // إخفاء زر إعادة المحاولة
+            elements.retryBtn.style.display = 'none';
+            
+            // إزالة رسائل الأخطاء السابقة
+            const troubleshootingTips = document.querySelector('.troubleshooting-tips');
+            if (troubleshootingTips) {
+                troubleshootingTips.remove();
+            }
+            
+            // إعادة تعيين المتغيرات
+            cameras = [];
+            currentCameraIndex = 0;
+            
+            // إزالة أي video stream موجود
+            if (elements.video.srcObject) {
+                const tracks = elements.video.srcObject.getTracks();
+                tracks.forEach(track => track.stop());
+                elements.video.srcObject = null;
+            }
+            
+            // إعادة التهيئة
+            try {
+                await initializeApp();
+                showMessage('تم إعادة تهيئة التطبيق بنجاح', 'success');
+            } catch (error) {
+                showMessage('فشلت إعادة التهيئة: ' + error.message, 'error');
+            }
+        }
+
+        // عرض نصائح حل المشاكل
+        function showTroubleshootingTips(errorMessage) {
+            const troubleshootingDiv = document.createElement('div');
+            troubleshootingDiv.className = 'troubleshooting-tips';
+            troubleshootingDiv.style.cssText = `
+                background: #fef2f2;
+                border: 2px solid #ef4444;
+                border-radius: 12px;
+                padding: 20px;
+                margin: 20px 0;
+                color: #991b1b;
+            `;
+
+            let tips = '';
+            
+            if (errorMessage.includes('رفض الإذن')) {
+                tips = `
+                    <h3>🔒 حل مشكلة إذن الكاميرا:</h3>
+                    <ul>
+                        <li>اضغط على أيقونة القفل/الكاميرا في شريط العنوان</li>
+                        <li>اختر "السماح" للوصول إلى الكاميرا</li>
+                        <li>أعد تحميل الصفحة</li>
+                        <li>تأكد من عدم حجب الكاميرا في إعدادات المتصفح</li>
+                    </ul>
+                `;
+            } else if (errorMessage.includes('لم يتم العثور')) {
+                tips = `
+                    <h3>📷 حل مشكلة عدم وجود كاميرا:</h3>
+                    <ul>
+                        <li>تأكد من توصيل الكاميرا بالجهاز</li>
+                        <li>تحقق من تشغيل الكاميرا في إعدادات الجهاز</li>
+                        <li>جرب إغلاق التطبيقات الأخرى التي قد تستخدم الكاميرا</li>
+                        <li>أعد تشغيل المتصفح</li>
+                    </ul>
+                `;
+            } else if (errorMessage.includes('مستخدمة من تطبيق آخر')) {
+                tips = `
+                    <h3>🔄 حل مشكلة الكاميرا المشغولة:</h3>
+                    <ul>
+                        <li>أغلق جميع التطبيقات الأخرى التي تستخدم الكاميرا</li>
+                        <li>أغلق علامات التبويب الأخرى التي تستخدم الكاميرا</li>
+                        <li>أعد تشغيل المتصفح</li>
+                        <li>أعد تشغيل الجهاز إذا لزم الأمر</li>
+                    </ul>
+                `;
+            } else {
+                tips = `
+                    <h3>🛠️ حلول عامة:</h3>
+                    <ul>
+                        <li>تأكد من استخدام متصفح حديث (Chrome, Firefox, Edge)</li>
+                        <li>تحقق من الاتصال بالإنترنت</li>
+                        <li>امنح الإذن للوصول إلى الكاميرا</li>
+                        <li>أعد تحميل الصفحة</li>
+                        <li>جرب في وضع التصفح الخاص</li>
+                    </ul>
+                `;
+            }
+
+            troubleshootingDiv.innerHTML = tips + `
+                <button onclick="this.parentElement.remove(); location.reload();" 
+                        style="background: #ef4444; color: white; border: none; padding: 10px 20px; 
+                               border-radius: 8px; cursor: pointer; margin-top: 10px;">
+                    إعادة المحاولة
+                </button>
+            `;
+
+            // إضافة النصائح بعد قسم الحالة
+            elements.statusSection.after(troubleshootingDiv);
+        }
+
         async function startScanning() {
             try {
                 showLoading(true);
+                updateStatus('جاري بدء الكاميرا...', 'info');
                 
                 const constraints = {
                     video: {
@@ -1249,17 +1398,39 @@
                     }
                 };
 
-                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                // محاولة الحصول على الكاميرا مع معالجة محسنة للأخطاء
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia(constraints);
+                } catch (error) {
+                    // إعادة المحاولة بقيود أقل تعقيداً
+                    console.warn('فشل الوصول بالقيود المتقدمة، جاري المحاولة بقيود أساسية:', error);
+                    const basicConstraints = {
+                        video: {
+                            facingMode: currentCameraIndex === 0 ? 'environment' : 'user'
+                        }
+                    };
+                    stream = await navigator.mediaDevices.getUserMedia(basicConstraints);
+                }
+
                 video.srcObject = stream;
 
-                await new Promise(resolve => {
+                await new Promise((resolve, reject) => {
                     video.onloadedmetadata = () => {
                         video.play().then(() => {
                             canvas.width = video.videoWidth;
                             canvas.height = video.videoHeight;
                             resolve();
-                        }).catch(resolve);
+                        }).catch(reject);
                     };
+                    
+                    video.onerror = () => {
+                        reject(new Error('خطأ في تحميل الفيديو'));
+                    };
+                    
+                    // مهلة زمنية للتحميل
+                    setTimeout(() => {
+                        reject(new Error('انتهت مهلة تحميل الفيديو'));
+                    }, 10000);
                 });
 
                 isScanning = true;
@@ -1285,9 +1456,28 @@
                 
             } catch (error) {
                 showLoading(false);
-                updateStatus('خطأ في بدء المسح: ' + error.message, 'error');
+                console.error('خطأ في بدء المسح:', error);
+                
+                let errorMessage = 'خطأ في بدء المسح: ';
+                
+                if (error.name === 'NotAllowedError') {
+                    errorMessage += 'تم رفض الإذن للوصول إلى الكاميرا';
+                } else if (error.name === 'NotFoundError') {
+                    errorMessage += 'لم يتم العثور على كاميرا';
+                } else if (error.name === 'NotReadableError') {
+                    errorMessage += 'الكاميرا مستخدمة من تطبيق آخر';
+                } else if (error.name === 'OverconstrainedError') {
+                    errorMessage += 'إعدادات الكاميرا غير مدعومة';
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                updateStatus(errorMessage, 'error');
                 stats.error++;
                 updateStats();
+                
+                // عرض نصائح حل المشاكل
+                showTroubleshootingTips(errorMessage);
             }
         }
 
