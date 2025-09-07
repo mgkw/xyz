@@ -974,7 +974,10 @@
     <div class="app-container">
         <!-- Header -->
         <div class="app-header" style="grid-column: 1 / -1;">
-            <h1 class="app-title"><i class="fas fa-qrcode"></i> مسح الباركود</h1>
+            <h1 class="app-title">
+                <i class="fas fa-qrcode"></i> مسح الباركود 
+                <span class="auto-mode-indicator">🔄 تلقائي</span>
+            </h1>
             <p class="app-subtitle">نظام إدارة المخزون المتطور</p>
         </div>
 
@@ -1222,7 +1225,17 @@
                 updateStatus('جاري تهيئة الكاميرا...', 'info');
                 await getCameras();
                 setupEventListeners();
-                updateStatus('تم تهيئة التطبيق بنجاح - اضغط "بدء المسح" لبدء مسح الباركود', 'success');
+                
+                // بدء الطابور تلقائياً عند تحميل الصفحة
+                isProcessingQueue = true;
+                elements.startQueueBtn.disabled = true;
+                elements.pauseQueueBtn.disabled = false;
+                elements.queueSection.classList.add('active');
+                
+                // تحديث عرض الطابور للحالة الجديدة
+                updateQueueDisplay();
+                
+                updateStatus('🚀 النظام يعمل تلقائياً - ابدأ المسح للمعالجة الفورية', 'success');
                 
             } catch (error) {
                 console.error('خطأ في تهيئة التطبيق:', error);
@@ -1875,9 +1888,9 @@
             if (processingQueue.length === 0) {
                 queueList.innerHTML = `
                     <div class="empty-state">
-                        <i class="fas fa-clock"></i>
-                        <h3>لا توجد عناصر في الطابور</h3>
-                        <p>ابدأ بمسح الباركودات لإضافتها للطابور</p>
+                        <i class="fas fa-qrcode"></i>
+                        <h3>النظام جاهز للمسح</h3>
+                        <p>ابدأ بمسح الباركودات للمعالجة التلقائية</p>
                     </div>
                 `;
                 return;
