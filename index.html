@@ -764,16 +764,25 @@
         .queue-item.processing {
             background: #fffbeb;
             border-left: 4px solid var(--warning-color);
+            animation: pulse 2s infinite;
         }
 
         .queue-item.completed {
             background: #ecfdf5;
             border-left: 4px solid var(--success-color);
+            animation: slideIn 0.5s ease-out;
         }
 
         .queue-item.failed {
             background: #fef2f2;
             border-left: 4px solid var(--error-color);
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
         }
 
         .queue-item-info {
@@ -1692,8 +1701,10 @@
             
             updateStatus(`تم إضافة الباركود إلى الطابور (${processingQueue.length} في الانتظار)`, 'info');
             
-            // بدء المعالجة التلقائية إذا كان الطابور يعمل
-            if (isProcessingQueue) {
+            // بدء المعالجة التلقائية فوراً
+            if (!isProcessingQueue) {
+                startQueueProcessing();
+            } else {
                 processQueue();
             }
         }
@@ -1710,7 +1721,7 @@
             elements.pauseQueueBtn.disabled = false;
             elements.queueSection.classList.add('active');
             
-            updateStatus('تم بدء معالجة الطابور...', 'success');
+            updateStatus('تم بدء المعالجة التلقائية للطابور...', 'success');
             processQueue();
         }
 
@@ -1755,8 +1766,14 @@
             if (pendingItems.length === 0) {
                 if (activeProcesses === 0) {
                     // انتهت جميع المعالجات
-                    pauseQueueProcessing();
-                    updateStatus('تم الانتهاء من معالجة جميع العناصر في الطابور', 'success');
+                    const completedCount = processingQueue.filter(item => item.status === 'completed').length;
+                    const failedCount = processingQueue.filter(item => item.status === 'failed').length;
+                    const totalCount = processingQueue.length;
+                    
+                    updateStatus(`انتهت المعالجة التلقائية: ${completedCount} نجح، ${failedCount} فشل من أصل ${totalCount}`, 'success');
+                    
+                    // إبقاء الطابور يعمل لاستقبال عناصر جديدة
+                    // لا نوقف الطابور تلقائياً
                 }
                 return;
             }
@@ -1791,6 +1808,9 @@
                     item.result = orderData;
                     stats.success++;
                     queueStats.processed++;
+                    
+                    // صوت النجاح
+                    playSuccessSound();
                 } else {
                     // لم يتم العثور على الطلب
                     await displayNotFoundResult(item.barcode);
@@ -1798,6 +1818,9 @@
                     item.result = { error: 'لم يتم العثور على الطلب' };
                     stats.error++;
                     queueStats.failed++;
+                    
+                    // صوت الفشل
+                    playErrorSound();
                 }
                 
                 stats.pending--;
@@ -1807,20 +1830,28 @@
                 console.error('خطأ في معالجة العنصر:', error);
                 
                 if (item.attempts < 3) {
-                    // إعادة المحاولة
+                    // إعادة المحاولة التلقائية
                     item.status = 'pending';
+                    updateStatus(`إعادة محاولة للباركود ${item.barcode} (المحاولة ${item.attempts + 1}/3)`, 'warning');
+                    
+                    // إعادة المحاولة بعد تأخير متزايد
+                    const delay = item.attempts * 2000; // 2 ثانية، 4 ثواني، 6 ثواني
                     setTimeout(() => {
                         if (isProcessingQueue) {
                             processQueue();
                         }
-                    }, 2000);
+                    }, delay);
                 } else {
-                    // فشل نهائي
+                    // فشل نهائي بعد 3 محاولات
                     item.status = 'failed';
-                    item.result = { error: error.message };
+                    item.result = { error: `فشل نهائي بعد 3 محاولات: ${error.message}` };
                     stats.error++;
                     stats.pending--;
                     queueStats.failed++;
+                    updateStatus(`فشل نهائي في معالجة الباركود ${item.barcode} بعد 3 محاولات`, 'error');
+                    
+                    // صوت الفشل النهائي
+                    playErrorSound();
                 }
             } finally {
                 activeProcesses--;
@@ -1828,12 +1859,12 @@
                 updateQueueStats();
                 updateStats();
                 
-                // متابعة معالجة العناصر التالية
+                // متابعة معالجة العناصر التالية تلقائياً
                 setTimeout(() => {
                     if (isProcessingQueue) {
                         processQueue();
                     }
-                }, 500);
+                }, 100);
             }
         }
 
@@ -1890,7 +1921,8 @@
                 <div class="queue-item-info">
                     <div class="queue-item-barcode">${item.barcode}</div>
                     <div class="queue-item-time">${item.timestamp.toLocaleTimeString('ar-IQ')}</div>
-                    ${item.attempts > 1 ? `<div class="queue-item-time">المحاولة ${item.attempts}</div>` : ''}
+                    ${item.attempts > 1 ? `<div class="queue-item-time">المحاولة ${item.attempts}/3</div>` : ''}
+                    ${item.status === 'failed' && item.attempts >= 3 ? `<div class="queue-item-time" style="color: var(--error-color); font-weight: 600;">فشل نهائي بعد 3 محاولات</div>` : ''}
                 </div>
                 <div class="queue-item-status ${item.status}">
                     ${statusIcons[item.status]} ${statusTexts[item.status]}
@@ -2306,6 +2338,52 @@ ${orderData.status === 'مؤكد' || orderData.auto_confirmed ? '🔄 تنبيه
             }
         }
 
+        // إشعار صوتي للنجاح
+        function playSuccessSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 523; // نوتة C5
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            } catch (error) {
+                // تجاهل أخطاء الصوت
+            }
+        }
+
+        // إشعار صوتي للفشل
+        function playErrorSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 220; // نوتة A3
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            } catch (error) {
+                // تجاهل أخطاء الصوت
+            }
+        }
+
         // دالة عرض تنبيه الطلب المؤكد مسبقاً
         function showConfirmedAlert() {
             const alertBackdrop = document.getElementById('confirmedAlertBackdrop');
@@ -2349,11 +2427,17 @@ ${orderData.status === 'مؤكد' || orderData.auto_confirmed ? '🔄 تنبيه
         // تحديث حالة نظام الطابور عند بدء/إيقاف المسح
         function updateScanningState() {
             if (isScanning) {
-                updateStatus('المسح نشط - ابدأ بمسح الباركودات لإضافتها للطابور', 'success');
+                // بدء الطابور تلقائياً عند بدء المسح
+                if (!isProcessingQueue && processingQueue.length === 0) {
+                    updateStatus('المسح النشط - النظام جاهز لمعالجة الباركودات تلقائياً', 'success');
+                } else if (!isProcessingQueue) {
+                    startQueueProcessing();
+                }
             } else {
                 // إيقاف الطابور عند إيقاف المسح
                 if (isProcessingQueue) {
                     pauseQueueProcessing();
+                    updateStatus('تم إيقاف المسح والمعالجة التلقائية', 'info');
                 }
             }
         }
