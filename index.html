@@ -61,6 +61,37 @@
             font-weight: 700;
             margin-bottom: 8px;
             text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .auto-mode-indicator {
+            font-size: 0.9rem;
+            background: linear-gradient(135deg, #FF6B35, #F7931E);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 25px;
+            font-weight: 600;
+            animation: glow 2s infinite;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        @keyframes glow {
+            0% { 
+                transform: scale(1);
+                box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+            }
+            50% { 
+                transform: scale(1.02);
+                box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6);
+            }
+            100% { 
+                transform: scale(1);
+                box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+            }
         }
 
         .app-subtitle {
@@ -1000,7 +1031,7 @@
             </div>
 
             <div class="controls-section">
-                <button class="control-btn" id="startBtn">
+                <button class="control-btn" id="startBtn" style="display: none;">
                     <i class="fas fa-play"></i>
                     بدء المسح
                 </button>
@@ -1025,7 +1056,7 @@
             <div class="status-section" id="statusSection">
                 <div class="status-text" id="statusText">
                     <i class="fas fa-info-circle"></i>
-                    اضغط "بدء المسح" لبدء مسح الباركود
+                    النظام يعمل تلقائياً - الكاميرا ثابتة والطلبات تنتقل للطابور
                 </div>
             </div>
 
@@ -1120,9 +1151,9 @@
             
             <div class="results-container" id="resultsContainer">
                 <div class="empty-state">
-                    <i class="fas fa-search"></i>
-                    <h3>لا توجد نتائج بعد</h3>
-                    <p>ابدأ بمسح الباركود لعرض النتائج هنا</p>
+                    <i class="fas fa-camera"></i>
+                    <h3>النظام جاهز للمسح</h3>
+                    <p>الكاميرا ثابتة - امسح الباركود لتنتقل الطلبات للطابور</p>
                 </div>
             </div>
         </div>
@@ -1235,7 +1266,10 @@
                 // تحديث عرض الطابور للحالة الجديدة
                 updateQueueDisplay();
                 
-                updateStatus('🚀 النظام يعمل تلقائياً - ابدأ المسح للمعالجة الفورية', 'success');
+                // بدء المسح تلقائياً مع الكاميرا
+                await startScanning();
+                
+                updateStatus('� النظام يعمل - الكاميرا ثابتة والطلبات تنتقل للطابور', 'success');
                 
             } catch (error) {
                 console.error('خطأ في تهيئة التطبيق:', error);
@@ -1467,7 +1501,7 @@
                     elements.flashBtn.disabled = false;
                 }
 
-                updateStatus('المسح نشط - وجه الكاميرا نحو الباركود', 'success');
+                updateStatus('📱 المسح نشط - وجه الكاميرا نحو الباركود، الطلبات ستنتقل للطابور تلقائياً', 'success');
                 showLoading(false);
                 
                 updateScanningState(); // تحديث حالة نظام الطابور
