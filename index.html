@@ -107,6 +107,9 @@
             padding: 24px;
             box-shadow: var(--shadow-xl);
             backdrop-filter: blur(10px);
+            position: sticky; /* جعل الكاميرا ثابتة */
+            top: 20px; /* المسافة من الأعلى */
+            z-index: 100; /* أولوية عرض عالية */
         }
 
         .scanner-header {
@@ -359,9 +362,11 @@
         .results-section {
             background: white;
             border-radius: var(--border-radius);
-            padding: 24px;
+            padding: 16px;
             box-shadow: var(--shadow-lg);
             margin-bottom: 20px;
+            max-height: 250px; /* تحديد أقصى ارتفاع للحفاظ على الكاميرا */
+            overflow-y: auto; /* تمرير عمودي إذا لزم الأمر */
         }
 
         .results-header {
@@ -1798,6 +1803,9 @@
                 // تنبيه صوتي
                 playBeep();
 
+                // تأثير بصري على الكاميرا عند المسح
+                showScanSuccessEffect();
+
                 updateStatus(`تم اكتشاف باركود: ${barcodeData}`, 'success');
 
                 // إضافة إلى الطابور بدلاً من المعالجة المباشرة
@@ -2247,10 +2255,10 @@
                 timestamp: new Date()
             });
 
-            // التمرير إلى النتيجة الجديدة
-            setTimeout(() => {
-                resultElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }, 100);
+            // التمرير إلى النتيجة الجديدة - معطل للحفاظ على ثبات الكاميرا
+            // setTimeout(() => {
+            //     resultElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // }, 100);
         }
 
         async function displayNotFoundResult(barcodeData) {
@@ -2295,10 +2303,10 @@
                 timestamp: new Date()
             });
 
-            // التمرير إلى النتيجة الجديدة
-            setTimeout(() => {
-                resultElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }, 100);
+            // التمرير إلى النتيجة الجديدة - معطل للحفاظ على ثبات الكاميرا
+            // setTimeout(() => {
+            //     resultElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // }, 100);
         }
 
         async function sendToTelegram(orderData, barcodeData, capturedImage) {
