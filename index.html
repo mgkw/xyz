@@ -1,3 +1,17 @@
+        // تأثير بصري عند نجاح المسح
+        function showScanSuccessEffect() {
+            const scanFrame = document.getElementById('scanFrame');
+            if (!scanFrame) return;
+            scanFrame.classList.add('scan-success-effect');
+            setTimeout(() => {
+                scanFrame.classList.remove('scan-success-effect');
+            }, 250);
+        }
+        /* تأثير بصري عند نجاح المسح */
+        .scan-success-effect {
+            box-shadow: 0 0 0 4px #4CAF50, 0 0 16px 8px #4CAF5055;
+            transition: box-shadow 0.2s;
+        }
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
