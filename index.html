@@ -41,12 +41,56 @@
         }
 
         .app-container {
-            display: grid;
-            grid-template-columns: 1fr;
+            display: flex;
+            flex-direction: column;
             gap: 20px;
             padding: 20px;
             max-width: 1400px;
             margin: 0 auto;
+            min-height: calc(100vh - 40px);
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+        }
+
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .right-column::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .right-column::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .right-column::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        .right-column::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-color);
         }
 
         /* Header */
@@ -107,11 +151,9 @@
             padding: 24px;
             box-shadow: var(--shadow-xl);
             backdrop-filter: blur(10px);
-            position: sticky;
-            top: 20px;
-            z-index: 100;
             border: 2px solid rgba(37, 99, 235, 0.1);
             transition: border-color 0.3s ease;
+            margin-bottom: 20px;
         }
 
         .scanner-section:hover {
@@ -374,11 +416,9 @@
         .results-section {
             background: white;
             border-radius: var(--border-radius);
-            padding: 16px;
+            padding: 20px;
             box-shadow: var(--shadow-lg);
-            margin-bottom: 20px;
-            max-height: 250px; /* تحديد أقصى ارتفاع للحفاظ على الكاميرا */
-            overflow-y: auto; /* تمرير عمودي إذا لزم الأمر */
+            border: 1px solid #e2e8f0;
         }
 
         .results-header {
@@ -416,10 +456,25 @@
         }
 
         .results-container {
-            max-height: 500px;
+            max-height: 400px;
             overflow-y: auto;
             scrollbar-width: thin;
             scrollbar-color: #cbd5e1 transparent;
+            padding-right: 8px;
+        }
+
+        .results-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .results-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .results-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
         }
 
         .result-item {
@@ -823,9 +878,18 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 16px;
+            padding: 16px 20px;
             border-bottom: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: white;
             transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .queue-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         .queue-item:last-child {
@@ -922,11 +986,29 @@
             }
         }
 
+        @media (max-width: 1024px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .left-column {
+                position: static;
+            }
+        }
+
         @media (max-width: 768px) {
             .app-container {
                 padding: 15px;
                 gap: 15px;
+            }
+            
+            .content-grid {
                 grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .left-column, .right-column {
+                position: static;
             }
             
             .app-title {
@@ -1044,7 +1126,7 @@
 <body>
     <div class="app-container">
         <!-- Header -->
-        <div class="app-header" style="grid-column: 1 / -1;">
+        <div class="app-header">
             <h1 class="app-title">
                 <i class="fas fa-qrcode"></i> مسح الباركود 
                 <span class="auto-mode-indicator">🔄 تلقائي</span>
@@ -1052,7 +1134,11 @@
             <p class="app-subtitle">نظام إدارة المخزون المتطور</p>
         </div>
 
-        <!-- Scanner Section -->
+        <!-- Content Grid -->
+        <div class="content-grid">
+            <!-- Left Column - Scanner -->
+            <div class="left-column">
+                <!-- Scanner Section -->
         <div class="scanner-section">
             <div class="scanner-header">
                 <h2 class="scanner-title">
@@ -1119,8 +1205,11 @@
                 </div>
             </div>
         </div>
+            </div>
 
-        <!-- Queue Management Section -->
+            <!-- Right Column - Data and Results -->
+            <div class="right-column">
+                <!-- Queue Management Section -->
         <div class="queue-section" id="queueSection">
             <div class="queue-header">
                 <h2 class="queue-title">
@@ -1195,6 +1284,7 @@
                     <h3>النظام جاهز للمسح</h3>
                     <p>الكاميرا ثابتة - امسح الباركود لتنتقل الطلبات للطابور</p>
                 </div>
+            </div>
             </div>
         </div>
     </div>
