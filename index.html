@@ -1914,7 +1914,14 @@
         async function handleBarcodeDetected(barcodeData) {
             try {
                 // التقاط الصورة فوري عند الكشف
+                console.log('محاولة التقاط الصورة للباركود:', barcodeData);
                 const capturedImage = captureCurrentFrame();
+                
+                if (!capturedImage) {
+                    throw new Error('فشل في التقاط الصورة');
+                }
+                
+                console.log('تم التقاط الصورة بنجاح للباركود:', barcodeData);
                 
                 // تحديث الإحصائيات
                 stats.scanned++;
@@ -1937,22 +1944,90 @@
                 addToQueue(barcodeData, capturedImage);
                 
             } catch (error) {
+                console.error('خطأ في معالجة الباركود:', error);
                 updateStatus('خطأ في معالجة الباركود: ' + error.message, 'error');
                 stats.error++;
                 updateStats();
             }
         }
 
+        // ===== دوال مساعدة للتشخيص =====
+        
+        // دالة لاختبار التقاط الصورة (للاستخدام في وضع التطوير)
+        window.testCaptureImage = function() {
+            console.log('اختبار التقاط الصورة...');
+            const capturedImage = captureCurrentFrame();
+            if (capturedImage) {
+                console.log('✅ تم التقاط الصورة بنجاح');
+                console.log('حجم البيانات:', capturedImage.length, 'characters');
+                console.log('نوع البيانات:', capturedImage.substring(0, 30) + '...');
+                
+                // إنشاء صورة لعرضها في console (اختياري)
+                const img = new Image();
+                img.onload = function() {
+                    console.log('أبعاد الصورة:', this.width, 'x', this.height);
+                };
+                img.src = capturedImage;
+                
+                return capturedImage;
+            } else {
+                console.error('❌ فشل في التقاط الصورة');
+                return null;
+            }
+        };
+
+        // دالة لاختبار إرسال صورة تجريبية للتليجرام
+        window.testTelegramImage = async function() {
+            console.log('اختبار إرسال صورة للتليجرام...');
+            const capturedImage = captureCurrentFrame();
+            if (!capturedImage) {
+                console.error('لا يمكن التقاط الصورة');
+                return;
+            }
+            
+            const testOrderData = {
+                wasl_number: 'TEST-123',
+                order_id: 'TEST-ORDER',
+                receiver_name: 'اختبار',
+                receiver_phone: '07700000000',
+                governorate: 'بغداد',
+                total_amount: '25000',
+                net_amount: '23000',
+                status: 'غير مؤكد'
+            };
+            
+            try {
+                await sendToTelegram(testOrderData, 'TEST-BARCODE', capturedImage);
+                console.log('✅ تم إرسال الاختبار بنجاح');
+            } catch (error) {
+                console.error('❌ فشل الاختبار:', error);
+            }
+        };
+
         // ===== وظائف نظام الطابور =====
         
         // إضافة باركود إلى الطابور
         function addToQueue(barcodeData, capturedImage) {
+            // التحقق من صحة البيانات
+            if (!barcodeData) {
+                updateStatus('خطأ: باركود غير صالح', 'error');
+                return;
+            }
+            
+            if (!capturedImage) {
+                updateStatus('خطأ: لم يتم التقاط الصورة', 'error');
+                return;
+            }
+            
             // التحقق من عدم وجود نفس الباركود في الطابور
             const existingItem = processingQueue.find(item => item.barcode === barcodeData);
             if (existingItem) {
                 updateStatus(`الباركود ${barcodeData} موجود بالفعل في الطابور`, 'warning');
                 return;
             }
+
+            console.log('إضافة باركود جديد إلى الطابور:', barcodeData);
+            console.log('حجم الصورة المرفقة:', capturedImage.length, 'characters');
 
             const queueItem = {
                 id: Date.now() + Math.random(),
@@ -2067,17 +2142,37 @@
             item.status = 'processing';
             item.attempts++;
             
+            console.log('بدء معالجة العنصر:', item.barcode, '- المحاولة رقم:', item.attempts);
+            console.log('حالة الصورة:', item.capturedImage ? 'موجودة' : 'غير موجودة');
+            
             updateQueueItemDisplay(item);
             updateQueueStats();
 
             try {
+                // التحقق من وجود الصورة قبل المعالجة
+                if (!item.capturedImage) {
+                    throw new Error('لا توجد صورة مرفقة مع هذا العنصر');
+                }
+                
                 // البحث في API
+                console.log('البحث عن الطلب:', item.barcode);
                 const orderData = await searchOrder(item.barcode);
                 
                 if (orderData) {
+                    console.log('تم العثور على الطلب:', orderData);
+                    
                     // معالجة ناجحة
                     await displayOrderResult(orderData, item.barcode);
-                    await sendToTelegram(orderData, item.barcode, item.capturedImage);
+                    
+                    // إرسال إلى التليجرام مع معالجة أفضل للأخطاء
+                    try {
+                        await sendToTelegram(orderData, item.barcode, item.capturedImage);
+                        console.log('تم إرسال البيانات للتليجرام بنجاح');
+                    } catch (telegramError) {
+                        console.error('فشل في إرسال البيانات للتليجرام:', telegramError);
+                        // لا نعتبر هذا فشلاً في المعالجة، فقط في الإرسال
+                        updateStatus(`تم العثور على الطلب ولكن فشل إرسال التليجرام: ${telegramError.message}`, 'warning');
+                    }
                     
                     item.status = 'completed';
                     item.result = orderData;
@@ -2087,6 +2182,8 @@
                     // صوت النجاح
                     playSuccessSound();
                 } else {
+                    console.log('لم يتم العثور على الطلب:', item.barcode);
+                    
                     // لم يتم العثور على الطلب
                     await displayNotFoundResult(item.barcode);
                     item.status = 'failed';
@@ -2235,12 +2332,29 @@
 
         // دالة التقاط الإطار الحالي
         function captureCurrentFrame() {
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = video.videoWidth;
-            tempCanvas.height = video.videoHeight;
-            const tempCtx = tempCanvas.getContext('2d');
-            tempCtx.drawImage(video, 0, 0);
-            return tempCanvas.toDataURL('image/jpeg', 0.8);
+            try {
+                // التأكد من أن الفيديو جاهز ومحمل
+                if (!video || video.readyState < 2 || video.videoWidth === 0 || video.videoHeight === 0) {
+                    console.error('الفيديو غير جاهز لالتقاط الصورة');
+                    return null;
+                }
+
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = video.videoWidth;
+                tempCanvas.height = video.videoHeight;
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // رسم الفيديو على الـ canvas
+                tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+                
+                // تحويل إلى base64 مع جودة عالية
+                const dataURL = tempCanvas.toDataURL('image/jpeg', 0.9);
+                console.log('تم التقاط الصورة بنجاح، حجم البيانات:', dataURL.length);
+                return dataURL;
+            } catch (error) {
+                console.error('خطأ في التقاط الصورة:', error);
+                return null;
+            }
         }
 
         async function searchOrder(waslNumber) {
@@ -2436,9 +2550,6 @@
 
         async function sendToTelegram(orderData, barcodeData, capturedImage) {
             try {
-                console.log('بدء إرسال رسالة تليجرام للباركود:', barcodeData);
-                console.log('بيانات الطلب:', orderData);
-                
                 const now = new Date();
                 const dateStr = now.toLocaleDateString('ar-IQ');
                 const timeStr = now.toLocaleTimeString('ar-IQ');
@@ -2483,12 +2594,29 @@ ${orderData.governorate === 'كربلاء' ? '🚨 تنبيه: طلب كربلا
 ${orderData.status === 'مؤكد' || orderData.auto_confirmed ? '🔄 تنبيه: طلب مؤكد مسبقاً' : ''}
                 `.trim();
 
-                console.log('جاري إرسال الصورة للتليجرام...');
                 showTelegramStatus('📤 جاري إرسال البيانات والصورة للتيليجرام...');
 
-                // استخدام الصورة الملتقطة فورياً
-                const blob = await fetch(capturedImage).then(r => r.blob());
-                console.log('تم تحويل الصورة إلى blob، الحجم:', blob.size);
+                // التحقق من وجود الصورة
+                if (!capturedImage) {
+                    throw new Error('لم يتم التقاط الصورة بشكل صحيح');
+                }
+
+                console.log('بدء تحويل الصورة إلى blob...');
+                
+                // تحويل data URL إلى blob بطريقة محسنة
+                const response = await fetch(capturedImage);
+                if (!response.ok) {
+                    throw new Error('فشل في تحويل الصورة إلى blob');
+                }
+                const blob = await response.blob();
+                
+                console.log('تم تحويل الصورة بنجاح، حجم الملف:', blob.size, 'bytes');
+                console.log('نوع الملف:', blob.type);
+
+                // التحقق من حجم الصورة (التليجرام يدعم حتى 10 ميجابايت)
+                if (blob.size > 10 * 1024 * 1024) {
+                    throw new Error('حجم الصورة كبير جداً');
+                }
                 
                 // إنشاء لوحة مفاتيح إنلاين مع رابط الطباعة
                 const keyboard = {
@@ -2506,24 +2634,23 @@ ${orderData.status === 'مؤكد' || orderData.auto_confirmed ? '🔄 تنبيه
                 formData.append('caption', caption);
                 formData.append('reply_markup', JSON.stringify(keyboard));
 
+                console.log('بدء إرسال الطلب إلى التليجرام...');
                 const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendPhoto`;
-                console.log('URL التليجرام:', telegramUrl);
-                
-                const response = await fetch(telegramUrl, {
+                const telegramResponse = await fetch(telegramUrl, {
                     method: 'POST',
                     body: formData
                 });
 
-                console.log('استجابة التليجرام:', response.status, response.statusText);
-                
-                if (response.ok) {
-                    const responseData = await response.json();
-                    console.log('نجح إرسال الصورة:', responseData);
+                console.log('استجابة التليجرام:', telegramResponse.status, telegramResponse.statusText);
+
+                if (telegramResponse.ok) {
+                    const result = await telegramResponse.json();
+                    console.log('تم إرسال الصورة بنجاح:', result);
                     showTelegramStatus('✅ تم إرسال الصورة والبيانات للتيليجرام بنجاح');
                 } else {
-                    const errorData = await response.text();
-                    console.error('فشل إرسال الصورة:', errorData);
-                    throw new Error(`فشل في إرسال الرسالة: ${response.status} - ${errorData}`);
+                    const errorData = await telegramResponse.text();
+                    console.error('خطأ من التليجرام:', errorData);
+                    throw new Error(`فشل في إرسال الرسالة: ${telegramResponse.status} - ${errorData}`);
                 }
 
             } catch (error) {
@@ -2767,280 +2894,6 @@ ${orderData.status === 'مؤكد' || orderData.auto_confirmed ? '🔄 تنبيه
                 video.play();
             }
         });
-    </script>
-
-    <!-- سكريبت تحسين التليجرام المدمج -->
-    <script>
-        console.log('تم تحميل تحسينات التليجرام');
-
-        // إعادة تعريف دالة sendToTelegram مع تحسينات
-        const originalSendToTelegram = window.sendToTelegram;
-        
-        window.sendToTelegram = async function(orderData, barcodeData, capturedImage) {
-            try {
-                console.log('🚀 بدء إرسال رسالة تليجرام للباركود:', barcodeData);
-                console.log('📊 بيانات الطلب:', orderData);
-                
-                const now = new Date();
-                const dateStr = now.toLocaleDateString('ar-IQ');
-                const timeStr = now.toLocaleTimeString('ar-IQ');
-                
-                // تحديد الحالة مع الإيموجي المناسب
-                let statusText = '⚠️ غير مؤكد';
-                if (orderData.status === 'مؤكد' || orderData.auto_confirmed) {
-                    statusText = '✅ مؤكد';
-                } else if (orderData.status === 'قيد المعالجة') {
-                    statusText = '⚡ قيد المعالجة';
-                } else if (orderData.status === 'ملغي') {
-                    statusText = '❌ ملغي';
-                } else if (orderData.status === 'مسلم') {
-                    statusText = '📦 مسلم';
-                }
-                
-                // تنسيق الرسالة
-                const caption = `
-📊 تفاصيل الطلب:
-• رقم الوصل: ${orderData.wasl_number || 'غير محدد'}
-• رقم الطلب: ${orderData.order_id || 'غير محدد'}
-• المرسل: ${orderData.sender || 'غير محدد'}
-• اسم المستلم: ${orderData.receiver_name || 'غير محدد'}
-• هاتف المستلم: ${orderData.receiver_phone || 'غير محدد'}
-• منطقة المستلم: ${orderData.receiver_area || 'غير محدد'}
-• المحافظة: ${orderData.governorate || 'غير محدد'}
-• المبلغ الإجمالي: ${orderData.total_amount || 'غير محدد'} دينار
-• أجرة التوصيل: ${orderData.delivery_fee || 'غير محدد'} دينار
-• المبلغ الصافي: ${orderData.net_amount || 'غير محدد'} دينار
-• نوع التأكيد: ${orderData.auto_confirmed ? 'تأكيد تلقائي' : 'تأكيد يدوي'}
-• الحالة: ${statusText}
-• تاريخ التأكيد: ${orderData.confirmed_at || 'غير محدد'}
-• المصدر: ${orderData.source || 'غير محدد'}
-
-⏰ وقت المسح:
-• التاريخ: ${dateStr}
-• الوقت: ${timeStr}
-
-🔍 الباركود الممسوح: ${barcodeData}
-
-${orderData.governorate === 'كربلاء' ? '🚨 تنبيه: طلب كربلاء' : ''}
-${orderData.status === 'مؤكد' || orderData.auto_confirmed ? '🔄 تنبيه: طلب مؤكد مسبقاً' : ''}
-                `.trim();
-
-                console.log('📝 محاولة إرسال عبر CORS Proxy...');
-                showTelegramStatus('📤 جاري إرسال البيانات للتيليجرام...');
-
-                const keyboard = {
-                    inline_keyboard: [[
-                        {
-                            text: "🖨️ طباعة الطلب",
-                            url: `https://www.alsultanba.com/print_waslAll.php?wasl_id=${orderData.order_id}`
-                        }
-                    ]]
-                };
-
-                // استخدام CORS Proxy
-                const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-                const telegramUrl = `${proxyUrl}https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
-                
-                console.log('🌐 URL مع Proxy:', telegramUrl);
-                
-                const response = await fetch(telegramUrl, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify({
-                        chat_id: TELEGRAM_CHAT_ID,
-                        text: caption,
-                        reply_markup: keyboard
-                    })
-                });
-
-                console.log('📡 استجابة:', response.status, response.statusText);
-                
-                if (response.ok) {
-                    const textData = await response.json();
-                    console.log('✅ نجح الإرسال:', textData);
-                    showTelegramStatus('✅ تم إرسال البيانات للتيليجرام بنجاح');
-                    return true;
-                } else {
-                    throw new Error(`فشل في الإرسال: ${response.status}`);
-                }
-
-            } catch (error) {
-                console.error('❌ خطأ في Proxy، محاولة الطريقة البديلة:', error);
-                
-                // الطريقة البديلة: استخدام webhook أو iframe
-                try {
-                    return await sendViaTelegramBot(orderData, barcodeData, caption);
-                } catch (fallbackError) {
-                    console.error('❌ فشل في جميع الطرق:', fallbackError);
-                    showTelegramStatus('❌ فشل في إرسال التليجرام. جرب إعادة تحميل الصفحة.');
-                    return false;
-                }
-            }
-        };
-
-        // طريقة بديلة باستخدام webhook service
-        async function sendViaTelegramBot(orderData, barcodeData, message) {
-            console.log('🔄 محاولة الطريقة البديلة...');
-            
-            try {
-                // استخدام خدمة webhook مجانية
-                const webhookUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`);
-                
-                const response = await fetch(webhookUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: new URLSearchParams({
-                        chat_id: TELEGRAM_CHAT_ID,
-                        text: message,
-                        parse_mode: 'HTML'
-                    })
-                });
-                
-                if (response.ok) {
-                    console.log('✅ نجح الإرسال عبر webhook');
-                    showTelegramStatus('✅ تم إرسال البيانات للتيليجرام بنجاح');
-                    return true;
-                }
-            } catch (webhookError) {
-                console.log('❌ فشل webhook، محاولة الطريقة اليدوية...');
-            }
-            
-            // الطريقة اليدوية: نسخ الرسالة للحافظة وفتح التليجرام
-            try {
-                await navigator.clipboard.writeText(message);
-                console.log('✅ تم نسخ الرسالة للحافظة');
-                
-                // فتح التليجرام ويب
-                const telegramWebUrl = `https://web.telegram.org/k/#@${TELEGRAM_CHAT_ID.replace('-', '')}`;
-                window.open(telegramWebUrl, '_blank');
-                
-                showTelegramStatus('� تم نسخ الرسالة للحافظة وفتح التليجرام. الصق الرسالة يدوياً.');
-                
-                // عرض الرسالة للمستخدم
-                const messageBox = document.createElement('div');
-                messageBox.style.cssText = `
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    background: white;
-                    padding: 20px;
-                    border-radius: 10px;
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-                    z-index: 10001;
-                    max-width: 500px;
-                    max-height: 400px;
-                    overflow-y: auto;
-                    direction: rtl;
-                `;
-                
-                messageBox.innerHTML = `
-                    <h3 style="margin-bottom: 15px; color: #007bff;">📋 الرسالة جاهزة للنسخ:</h3>
-                    <textarea readonly style="width: 100%; height: 200px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-family: Arial;">${message}</textarea>
-                    <div style="margin-top: 15px; text-align: center;">
-                        <button onclick="this.parentElement.parentElement.remove()" style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">إغلاق</button>
-                        <button onclick="navigator.clipboard.writeText('${message.replace(/'/g, "\\'")}'); alert('تم النسخ!')" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-left: 10px;">نسخ مرة أخرى</button>
-                    </div>
-                `;
-                
-                document.body.appendChild(messageBox);
-                
-                return true;
-            } catch (clipboardError) {
-                console.error('❌ فشل في نسخ الرسالة:', clipboardError);
-                
-                // عرض الرسالة فقط
-                alert('📋 انسخ هذه الرسالة وأرسلها للتليجرام يدوياً:\n\n' + message);
-                return true;
-            }
-        }
-
-        // إضافة زر اختبار سريع
-        const testButton = document.createElement('button');
-        testButton.innerHTML = '🧪 اختبار التليجرام';
-        testButton.style.cssText = `
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            z-index: 10000;
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-        `;
-
-        testButton.onclick = async function() {
-            console.log('🧪 بدء اختبار التليجرام...');
-            
-            // اختبار CORS أولاً
-            try {
-                console.log('🔍 اختبار CORS...');
-                const corsTest = await fetch('https://api.telegram.org/bot' + TELEGRAM_TOKEN + '/getMe', {
-                    method: 'GET',
-                    mode: 'cors'
-                });
-                console.log('CORS Test Result:', corsTest.status);
-            } catch (corsError) {
-                console.log('CORS Error:', corsError.message);
-                alert('❌ مشكلة CORS مؤكدة. سيتم استخدام الطريقة البديلة.');
-            }
-            
-            const testData = {
-                wasl_number: 'TEST123',
-                order_id: 'TEST123',
-                sender: 'مرسل تجريبي',
-                receiver_name: 'مستلم تجريبي',
-                receiver_phone: '07901234567',
-                receiver_area: 'منطقة تجريبية',
-                governorate: 'بغداد',
-                total_amount: '50000',
-                delivery_fee: '5000',
-                net_amount: '45000',
-                status: 'غير مؤكد',
-                auto_confirmed: false,
-                confirmed_at: null,
-                source: 'اختبار'
-            };
-            
-            // إنشاء صورة تجريبية
-            const canvas = document.createElement('canvas');
-            canvas.width = 300;
-            canvas.height = 200;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#4CAF50';
-            ctx.fillRect(0, 0, 300, 200);
-            ctx.fillStyle = 'white';
-            ctx.font = '20px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('اختبار تليجرام', 150, 100);
-            ctx.fillText(new Date().toLocaleTimeString('ar-IQ'), 150, 130);
-            
-            const testImage = canvas.toDataURL('image/png');
-            
-            const result = await window.sendToTelegram(testData, 'TEST123456789', testImage);
-            
-            if (result) {
-                alert('✅ تم تنفيذ العملية! تحقق من قناة التليجرام أو النافذة المنبثقة.');
-            } else {
-                alert('❌ فشل الاختبار. تحقق من Console للتفاصيل.');
-            }
-        };
-
-        // إضافة الزر عند تحميل الصفحة
-        window.addEventListener('load', () => {
-            document.body.appendChild(testButton);
-        });
-
-        console.log('🎉 تم تحميل تحسينات التليجرام بنجاح!');
     </script>
 </body>
 </html>
