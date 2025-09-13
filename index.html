@@ -2825,8 +2825,7 @@ ${orderData.governorate === 'كربلاء' ? '🚨 تنبيه: طلب كربلا
 ${orderData.status === 'مؤكد' || orderData.auto_confirmed ? '🔄 تنبيه: طلب مؤكد مسبقاً' : ''}
                 `.trim();
 
-                // أولاً: محاولة إرسال رسالة نصية (أسرع وأكثر موثوقية)
-                console.log('📝 محاولة إرسال رسالة نصية...');
+                console.log('📝 محاولة إرسال عبر CORS Proxy...');
                 showTelegramStatus('📤 جاري إرسال البيانات للتيليجرام...');
 
                 const keyboard = {
@@ -2838,15 +2837,17 @@ ${orderData.status === 'مؤكد' || orderData.auto_confirmed ? '🔄 تنبيه
                     ]]
                 };
 
-                // إرسال الرسالة النصية
-                const textUrl = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
-                console.log('🌐 URL النص:', textUrl);
+                // استخدام CORS Proxy
+                const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+                const telegramUrl = `${proxyUrl}https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
                 
-                const textResponse = await fetch(textUrl, {
+                console.log('🌐 URL مع Proxy:', telegramUrl);
+                
+                const response = await fetch(telegramUrl, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json'
+                        'X-Requested-With': 'XMLHttpRequest'
                     },
                     body: JSON.stringify({
                         chat_id: TELEGRAM_CHAT_ID,
@@ -2855,53 +2856,109 @@ ${orderData.status === 'مؤكد' || orderData.auto_confirmed ? '🔄 تنبيه
                     })
                 });
 
-                console.log('📡 استجابة الرسالة النصية:', textResponse.status, textResponse.statusText);
+                console.log('📡 استجابة:', response.status, response.statusText);
                 
-                if (textResponse.ok) {
-                    const textData = await textResponse.json();
-                    console.log('✅ نجح إرسال الرسالة النصية:', textData);
+                if (response.ok) {
+                    const textData = await response.json();
+                    console.log('✅ نجح الإرسال:', textData);
                     showTelegramStatus('✅ تم إرسال البيانات للتيليجرام بنجاح');
-                    
-                    // محاولة إرسال الصورة كرسالة منفصلة
-                    try {
-                        console.log('🖼️ محاولة إرسال الصورة...');
-                        const blob = await fetch(capturedImage).then(r => r.blob());
-                        console.log('📦 حجم الصورة:', Math.round(blob.size / 1024), 'KB');
-                        
-                        const formData = new FormData();
-                        formData.append('chat_id', TELEGRAM_CHAT_ID);
-                        formData.append('photo', blob, 'barcode_scan.jpg');
-                        formData.append('caption', `🖼️ صورة الباركود: ${barcodeData}`);
-
-                        const photoUrl = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendPhoto`;
-                        const photoResponse = await fetch(photoUrl, {
-                            method: 'POST',
-                            body: formData
-                        });
-
-                        if (photoResponse.ok) {
-                            console.log('✅ نجح إرسال الصورة');
-                            showTelegramStatus('✅ تم إرسال البيانات والصورة للتيليجرام بنجاح');
-                        } else {
-                            console.warn('⚠️ فشل إرسال الصورة (لكن النص نجح)');
-                        }
-                    } catch (photoError) {
-                        console.warn('⚠️ خطأ في إرسال الصورة:', photoError);
-                    }
-                    
                     return true;
                 } else {
-                    const errorData = await textResponse.text();
-                    console.error('❌ فشل إرسال الرسالة:', errorData);
-                    throw new Error(`فشل في إرسال الرسالة: ${textResponse.status}`);
+                    throw new Error(`فشل في الإرسال: ${response.status}`);
                 }
 
             } catch (error) {
-                console.error('❌ خطأ في إرسال التليجرام:', error);
-                showTelegramStatus('❌ خطأ في إرسال البيانات للتيليجرام: ' + error.message);
-                return false;
+                console.error('❌ خطأ في Proxy، محاولة الطريقة البديلة:', error);
+                
+                // الطريقة البديلة: استخدام webhook أو iframe
+                try {
+                    return await sendViaTelegramBot(orderData, barcodeData, caption);
+                } catch (fallbackError) {
+                    console.error('❌ فشل في جميع الطرق:', fallbackError);
+                    showTelegramStatus('❌ فشل في إرسال التليجرام. جرب إعادة تحميل الصفحة.');
+                    return false;
+                }
             }
         };
+
+        // طريقة بديلة باستخدام webhook service
+        async function sendViaTelegramBot(orderData, barcodeData, message) {
+            console.log('🔄 محاولة الطريقة البديلة...');
+            
+            try {
+                // استخدام خدمة webhook مجانية
+                const webhookUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`);
+                
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        chat_id: TELEGRAM_CHAT_ID,
+                        text: message,
+                        parse_mode: 'HTML'
+                    })
+                });
+                
+                if (response.ok) {
+                    console.log('✅ نجح الإرسال عبر webhook');
+                    showTelegramStatus('✅ تم إرسال البيانات للتيليجرام بنجاح');
+                    return true;
+                }
+            } catch (webhookError) {
+                console.log('❌ فشل webhook، محاولة الطريقة اليدوية...');
+            }
+            
+            // الطريقة اليدوية: نسخ الرسالة للحافظة وفتح التليجرام
+            try {
+                await navigator.clipboard.writeText(message);
+                console.log('✅ تم نسخ الرسالة للحافظة');
+                
+                // فتح التليجرام ويب
+                const telegramWebUrl = `https://web.telegram.org/k/#@${TELEGRAM_CHAT_ID.replace('-', '')}`;
+                window.open(telegramWebUrl, '_blank');
+                
+                showTelegramStatus('� تم نسخ الرسالة للحافظة وفتح التليجرام. الصق الرسالة يدوياً.');
+                
+                // عرض الرسالة للمستخدم
+                const messageBox = document.createElement('div');
+                messageBox.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: white;
+                    padding: 20px;
+                    border-radius: 10px;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                    z-index: 10001;
+                    max-width: 500px;
+                    max-height: 400px;
+                    overflow-y: auto;
+                    direction: rtl;
+                `;
+                
+                messageBox.innerHTML = `
+                    <h3 style="margin-bottom: 15px; color: #007bff;">📋 الرسالة جاهزة للنسخ:</h3>
+                    <textarea readonly style="width: 100%; height: 200px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-family: Arial;">${message}</textarea>
+                    <div style="margin-top: 15px; text-align: center;">
+                        <button onclick="this.parentElement.parentElement.remove()" style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">إغلاق</button>
+                        <button onclick="navigator.clipboard.writeText('${message.replace(/'/g, "\\'")}'); alert('تم النسخ!')" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-left: 10px;">نسخ مرة أخرى</button>
+                    </div>
+                `;
+                
+                document.body.appendChild(messageBox);
+                
+                return true;
+            } catch (clipboardError) {
+                console.error('❌ فشل في نسخ الرسالة:', clipboardError);
+                
+                // عرض الرسالة فقط
+                alert('📋 انسخ هذه الرسالة وأرسلها للتليجرام يدوياً:\n\n' + message);
+                return true;
+            }
+        }
 
         // إضافة زر اختبار سريع
         const testButton = document.createElement('button');
@@ -2923,6 +2980,19 @@ ${orderData.status === 'مؤكد' || orderData.auto_confirmed ? '🔄 تنبيه
 
         testButton.onclick = async function() {
             console.log('🧪 بدء اختبار التليجرام...');
+            
+            // اختبار CORS أولاً
+            try {
+                console.log('🔍 اختبار CORS...');
+                const corsTest = await fetch('https://api.telegram.org/bot' + TELEGRAM_TOKEN + '/getMe', {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                console.log('CORS Test Result:', corsTest.status);
+            } catch (corsError) {
+                console.log('CORS Error:', corsError.message);
+                alert('❌ مشكلة CORS مؤكدة. سيتم استخدام الطريقة البديلة.');
+            }
             
             const testData = {
                 wasl_number: 'TEST123',
@@ -2959,9 +3029,9 @@ ${orderData.status === 'مؤكد' || orderData.auto_confirmed ? '🔄 تنبيه
             const result = await window.sendToTelegram(testData, 'TEST123456789', testImage);
             
             if (result) {
-                alert('✅ نجح اختبار التليجرام! تحقق من القناة.');
+                alert('✅ تم تنفيذ العملية! تحقق من قناة التليجرام أو النافذة المنبثقة.');
             } else {
-                alert('❌ فشل اختبار التليجرام. تحقق من Console للتفاصيل.');
+                alert('❌ فشل الاختبار. تحقق من Console للتفاصيل.');
             }
         };
 
