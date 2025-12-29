@@ -475,6 +475,110 @@
             opacity: 1;
         }
 
+        /* Camera Info Modal */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--radius);
+            padding: 25px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #64748b;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            background: #f1f5f9;
+            color: var(--error);
+        }
+
+        .camera-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .camera-item {
+            padding: 15px;
+            background: var(--light);
+            border-radius: var(--radius);
+            border-left: 4px solid #cbd5e1;
+            transition: all 0.3s;
+        }
+
+        .camera-item.active {
+            border-left-color: var(--primary);
+            background: #dbeafe;
+        }
+
+        .camera-item-name {
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--dark);
+        }
+
+        .camera-item-id {
+            font-size: 0.8rem;
+            color: #64748b;
+            word-break: break-all;
+            font-family: monospace;
+        }
+
+        .camera-item-index {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-left: 8px;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .header h1 {
@@ -528,6 +632,9 @@
                 </button>
                 <button class="btn btn-primary" id="cameraBtn" disabled>
                     <i class="fas fa-sync"></i> تبديل
+                </button>
+                <button class="btn btn-primary" id="infoBtn" onclick="showCameraInfo()" title="عرض معلومات الكاميرات">
+                    <i class="fas fa-info-circle"></i> معلومات
                 </button>
                 <button class="btn btn-warning" id="flashBtn" disabled>
                     <i class="fas fa-lightbulb"></i> فلاش
@@ -603,6 +710,23 @@
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
+    <!-- Camera Info Modal -->
+    <div class="modal" id="cameraModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fas fa-camera"></i> معلومات الكاميرات
+                </div>
+                <button class="modal-close" onclick="closeCameraInfo()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="camera-list" id="cameraList">
+                <!-- سيتم ملؤها ديناميكياً -->
+            </div>
+        </div>
+    </div>
+
     <canvas id="canvas" style="display: none;"></canvas>
 
     <script>
@@ -672,11 +796,43 @@
                 if (cameras.length === 0) throw new Error('لا توجد كاميرا');
                 if (cameras.length === 1) el.cameraBtn.style.display = 'none';
                 
+                // عرض أسماء الكاميرات
+                displayCameraNames();
+                
                 // البحث عن الكاميرا الخلفية ووضعها أولاً
                 await findBackCamera();
             } catch (error) {
                 throw new Error('خطأ في الوصول للكاميرا');
             }
+        }
+
+        function displayCameraNames() {
+            console.log('=== الكاميرات المتاحة ===');
+            cameras.forEach((cam, index) => {
+                const name = cam.label || `كاميرا ${index + 1}`;
+                const deviceId = cam.deviceId || 'غير محدد';
+                console.log(`${index + 1}. ${name}`);
+                console.log(`   Device ID: ${deviceId.substring(0, 20)}...`);
+            });
+            console.log('========================');
+            
+            // عرض في الواجهة أيضاً
+            const cameraNames = cameras.map((cam, index) => {
+                const name = cam.label || `كاميرا ${index + 1}`;
+                return `${index + 1}. ${name}`;
+            }).join('\n');
+            
+            updateStatus(`تم العثور على ${cameras.length} كاميرا`, 'success');
+            
+            // إضافة معلومات الكاميرات في console للوصول السريع
+            window.cameraInfo = cameras.map((cam, index) => ({
+                index,
+                name: cam.label || `كاميرا ${index + 1}`,
+                deviceId: cam.deviceId,
+                isActive: index === currentCamera
+            }));
+            
+            console.log('للوصول السريع: استخدم window.cameraInfo');
         }
 
         async function findBackCamera() {
@@ -1180,6 +1336,64 @@
         function clearResults() {
             el.resultsList.innerHTML = '<div class="empty"><i class="fas fa-search"></i><p>لا توجد نتائج</p></div>';
         }
+
+        // عرض معلومات الكاميرات
+        function showCameraInfo() {
+            const modal = document.getElementById('cameraModal');
+            const cameraList = document.getElementById('cameraList');
+            
+            if (cameras.length === 0) {
+                cameraList.innerHTML = '<div class="empty"><i class="fas fa-camera"></i><p>لا توجد كاميرات متاحة</p></div>';
+                modal.classList.add('show');
+                return;
+            }
+
+            cameraList.innerHTML = cameras.map((cam, index) => {
+                const name = cam.label || `كاميرا ${index + 1}`;
+                const deviceId = cam.deviceId || 'غير محدد';
+                const isActive = index === currentCamera;
+                
+                // تحديد نوع الكاميرا
+                let cameraType = '';
+                const labelLower = name.toLowerCase();
+                if (labelLower.includes('back') || labelLower.includes('rear') || 
+                    labelLower.includes('environment') || labelLower.includes('خلفي')) {
+                    cameraType = ' (خلفية)';
+                } else if (labelLower.includes('front') || labelLower.includes('user') || 
+                          labelLower.includes('أمامي')) {
+                    cameraType = ' (أمامية)';
+                }
+
+                return `
+                    <div class="camera-item ${isActive ? 'active' : ''}">
+                        <div class="camera-item-name">
+                            ${name}${cameraType}
+                            <span class="camera-item-index">#${index + 1}</span>
+                            ${isActive ? '<span style="color: var(--success); margin-right: 8px;">✓ نشطة</span>' : ''}
+                        </div>
+                        <div class="camera-item-id">
+                            <strong>Device ID:</strong><br>
+                            ${deviceId.length > 50 ? deviceId.substring(0, 50) + '...' : deviceId}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            modal.classList.add('show');
+        }
+
+        function closeCameraInfo() {
+            const modal = document.getElementById('cameraModal');
+            modal.classList.remove('show');
+        }
+
+        // إغلاق النافذة عند النقر خارجها
+        document.addEventListener('click', (e) => {
+            const modal = document.getElementById('cameraModal');
+            if (e.target === modal) {
+                closeCameraInfo();
+            }
+        });
 
         // Cleanup
         window.addEventListener('beforeunload', () => {
