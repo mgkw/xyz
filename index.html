@@ -5,24 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>مسح الباركود - نظام إدارة المخزون</title>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #2563eb;
-            --secondary-color: #1e40af;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --error-color: #ef4444;
-            --dark-color: #1e293b;
-            --light-color: #f8fafc;
-            --border-radius: 16px;
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+            --primary: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --radius: 12px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
         * {
@@ -32,167 +27,79 @@
         }
 
         body {
-            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            color: var(--dark-color);
-            line-height: 1.6;
-            overflow-x: hidden;
+            padding: 15px;
+            color: var(--dark);
         }
 
-        .app-container {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            padding: 20px;
-            max-width: 1400px;
+        .container {
+            max-width: 1200px;
             margin: 0 auto;
-            min-height: calc(100vh - 40px);
-        }
-
-        .content-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 20px;
-            align-items: start;
         }
 
-        .left-column {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            position: sticky;
-            top: 20px;
-            height: fit-content;
-        }
-
-        .right-column {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            max-height: calc(100vh - 120px);
-            overflow-y: auto;
-            padding-right: 10px;
-        }
-
-        .right-column::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .right-column::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-        }
-
-        .right-column::-webkit-scrollbar-thumb {
-            background: var(--primary-color);
-            border-radius: 4px;
-        }
-
-        .right-column::-webkit-scrollbar-thumb:hover {
-            background: var(--secondary-color);
+        @media (min-width: 768px) {
+            .container {
+                grid-template-columns: 1fr 1fr;
+            }
         }
 
         /* Header */
-        .app-header {
+        .header {
+            grid-column: 1 / -1;
             text-align: center;
             color: white;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
 
-        .app-title {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
             display: flex;
             align-items: center;
-            gap: 15px;
             justify-content: center;
+            gap: 10px;
         }
 
-        .auto-mode-indicator {
-            font-size: 0.9rem;
+        .header .badge {
             background: linear-gradient(135deg, #FF6B35, #F7931E);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 25px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
             font-weight: 600;
-            animation: glow 2s infinite;
-            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
-            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
 
-        @keyframes glow {
-            0% { 
-                transform: scale(1);
-                box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
-            }
-            50% { 
-                transform: scale(1.02);
-                box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6);
-            }
-            100% { 
-                transform: scale(1);
-                box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
-            }
-        }
-
-        .app-subtitle {
-            font-size: 1.1rem;
-            opacity: 0.9;
-            font-weight: 400;
-        }
-
-        /* Scanner Section */
-        .scanner-section {
+        /* Card */
+        .card {
             background: white;
-            border-radius: var(--border-radius);
-            padding: 24px;
-            box-shadow: var(--shadow-xl);
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(37, 99, 235, 0.1);
-            transition: border-color 0.3s ease;
-            margin-bottom: 20px;
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
         }
 
-        .scanner-section:hover {
-            border-color: rgba(37, 99, 235, 0.3);
-        }
-
-        .scanner-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            padding-bottom: 16px;
-            border-bottom: 2px solid #e2e8f0;
-        }
-
-        .scanner-title {
-            font-size: 1.5rem;
+        .card-title {
+            font-size: 1.2rem;
             font-weight: 600;
-            color: var(--dark-color);
+            margin-bottom: 15px;
             display: flex;
             align-items: center;
             gap: 8px;
+            color: var(--dark);
         }
 
-        .video-container {
+        /* Scanner */
+        .scanner-wrapper {
             position: relative;
             width: 100%;
-            height: 400px;
-            border-radius: var(--border-radius);
+            aspect-ratio: 4/3;
+            border-radius: var(--radius);
             overflow: hidden;
             background: #000;
-            margin-bottom: 20px;
-            border: 3px solid #e2e8f0;
-            transition: border-color 0.3s ease;
-        }
-
-        .video-container.scanning {
-            border-color: var(--success-color);
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.3);
         }
 
         #video {
@@ -203,10 +110,7 @@
 
         .scan-overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -214,306 +118,255 @@
         }
 
         .scan-frame {
-            width: 280px;
-            height: 180px;
-            border: 3px solid var(--success-color);
+            width: 70%;
+            max-width: 300px;
+            aspect-ratio: 1.6;
+            border: 3px solid var(--success);
             border-radius: 12px;
             position: relative;
-            background: rgba(16, 185, 129, 0.1);
-            animation: pulse 2s infinite;
-        }
-
-        .scan-frame::before,
-        .scan-frame::after,
-        .scan-frame .corner-tl,
-        .scan-frame .corner-tr,
-        .scan-frame .corner-bl,
-        .scan-frame .corner-br {
-            content: '';
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            border: 4px solid var(--success-color);
-        }
-
-        .scan-frame::before {
-            top: -4px;
-            left: -4px;
-            border-right: none;
-            border-bottom: none;
-        }
-
-        .scan-frame::after {
-            bottom: -4px;
-            right: -4px;
-            border-left: none;
-            border-top: none;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
         }
 
         .scan-line {
             position: absolute;
             top: 0;
-            left: 50%;
-            width: 2px;
-            height: 100%;
-            background: linear-gradient(to bottom, transparent, var(--success-color), transparent);
-            animation: scan-line 2s linear infinite;
-            transform: translateX(-50%);
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--success);
+            animation: scan 2s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+
+        .scan-frame.detected {
+            border-color: var(--warning);
+            animation: pulse 0.5s;
         }
 
         @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); }
-            50% { box-shadow: 0 0 40px rgba(16, 185, 129, 0.8); }
-        }
-
-        /* تأثير بصري عند نجاح المسح */
-        .scan-success-effect {
-            box-shadow: 0 0 0 4px #4CAF50, 0 0 16px 8px rgba(76, 175, 80, 0.3);
-            transition: box-shadow 0.2s ease-in-out;
-        }
-
-        @keyframes scan-line {
-            0% { transform: translateX(-50%) translateY(-100%); }
-            100% { transform: translateX(-50%) translateY(100%); }
-        }
-
-        .barcode-detected {
-            border-color: var(--warning-color) !important;
-            animation: detected 0.6s ease-in-out;
-        }
-
-        @keyframes detected {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
         }
 
         /* Controls */
-        .controls-section {
+        .controls {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
         }
 
-        .control-btn {
+        .btn {
+            padding: 12px;
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            padding: 14px 20px;
-            border: none;
-            border-radius: var(--border-radius);
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            background: var(--primary-color);
-            color: white;
-            box-shadow: var(--shadow-md);
+            gap: 6px;
+            font-size: 0.9rem;
         }
 
-        .control-btn:hover:not(:disabled) {
-            background: var(--secondary-color);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .control-btn:active {
-            transform: translateY(0);
-        }
-
-        .control-btn:disabled {
+        .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
-            transform: none;
         }
 
-        .control-btn.success {
-            background: var(--success-color);
+        .btn-primary {
+            background: var(--primary);
+            color: white;
         }
 
-        .control-btn.warning {
-            background: var(--warning-color);
+        .btn-primary:hover:not(:disabled) {
+            background: #1e40af;
+            transform: translateY(-2px);
         }
 
-        .control-btn.error {
-            background: var(--error-color);
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-error {
+            background: var(--error);
+            color: white;
         }
 
         /* Status */
-        .status-section {
-            background: var(--light-color);
-            border-radius: var(--border-radius);
-            padding: 16px;
-            margin-bottom: 20px;
-            border-left: 4px solid var(--primary-color);
-            transition: all 0.3s ease;
-        }
-
-        .status-section.success {
-            border-left-color: var(--success-color);
-            background: #ecfdf5;
-            color: #065f46;
-        }
-
-        .status-section.warning {
-            border-left-color: var(--warning-color);
-            background: #fffbeb;
-            color: #92400e;
-        }
-
-        .status-section.error {
-            border-left-color: var(--error-color);
-            background: #fef2f2;
-            color: #991b1b;
-        }
-
-        .status-text {
-            font-weight: 500;
+        .status {
+            padding: 12px;
+            border-radius: var(--radius);
+            margin-top: 15px;
             display: flex;
             align-items: center;
             gap: 8px;
+            font-weight: 500;
+        }
+
+        .status.info {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status.warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
         }
 
         /* Stats */
-        .stats-section {
+        .stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 16px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 15px;
         }
 
-        .stat-card {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 20px;
+        .stat {
             text-align: center;
-            box-shadow: var(--shadow-md);
-            border: 1px solid #e2e8f0;
-            transition: transform 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
+            padding: 15px;
+            background: var(--light);
+            border-radius: var(--radius);
         }
 
         .stat-number {
-            font-size: 2.5rem;
+            font-size: 1.8rem;
             font-weight: 700;
-            color: var(--primary-color);
+            color: var(--primary);
             margin-bottom: 4px;
         }
 
         .stat-label {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             color: #64748b;
-            font-weight: 500;
         }
 
-        /* Results */
-        .results-section {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 20px;
-            box-shadow: var(--shadow-lg);
-            border: 1px solid #e2e8f0;
+        /* Queue */
+        .queue {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 15px;
         }
 
-        .results-header {
+        .queue-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: var(--light);
+            border-radius: var(--radius);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 16px;
-            border-bottom: 2px solid #e2e8f0;
+            border-left: 4px solid #cbd5e1;
         }
 
-        .results-title {
-            font-size: 1.5rem;
+        .queue-item.processing {
+            border-left-color: var(--warning);
+            background: #fffbeb;
+        }
+
+        .queue-item.completed {
+            border-left-color: var(--success);
+            background: #ecfdf5;
+        }
+
+        .queue-item.failed {
+            border-left-color: var(--error);
+            background: #fef2f2;
+        }
+
+        .queue-info {
+            flex: 1;
+        }
+
+        .queue-barcode {
             font-weight: 600;
-            color: var(--dark-color);
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            margin-bottom: 4px;
         }
 
-        .clear-btn {
-            background: var(--error-color);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .queue-time {
+            font-size: 0.75rem;
+            color: #64748b;
         }
 
-        .clear-btn:hover {
-            background: #dc2626;
-            transform: translateY(-1px);
+        .queue-status {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
         }
 
-        .results-container {
-            max-height: 400px;
+        .queue-status.pending {
+            background: #e2e8f0;
+            color: #64748b;
+        }
+
+        .queue-status.processing {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .queue-status.completed {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .queue-status.failed {
+            background: #fecaca;
+            color: #991b1b;
+        }
+
+        /* Results */
+        .results {
+            max-height: 500px;
             overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: #cbd5e1 transparent;
-            padding-right: 8px;
-        }
-
-        .results-container::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .results-container::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 3px;
-        }
-
-        .results-container::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 3px;
         }
 
         .result-item {
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 16px;
-            border: 1px solid #e2e8f0;
-            transition: all 0.3s ease;
-            animation: slideIn 0.5s ease-out;
-        }
-
-        .result-item:hover {
-            box-shadow: var(--shadow-md);
-            transform: translateY(-1px);
-        }
-
-        .result-item:last-child {
-            margin-bottom: 0;
+            padding: 15px;
+            margin-bottom: 12px;
+            background: var(--light);
+            border-radius: var(--radius);
+            border-left: 4px solid var(--primary);
         }
 
         .result-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
             border-bottom: 1px solid #e2e8f0;
         }
 
         .result-id {
-            font-size: 1.1rem;
             font-weight: 600;
-            color: var(--primary-color);
+            color: var(--primary);
         }
 
         .result-status {
-            padding: 4px 12px;
-            border-radius: 20px;
+            padding: 4px 10px;
+            border-radius: 12px;
             font-size: 0.8rem;
             font-weight: 600;
         }
@@ -530,624 +383,137 @@
 
         .result-details {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 8px;
+            font-size: 0.9rem;
         }
 
         .detail-item {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
+            padding: 6px 0;
         }
 
         .detail-label {
-            font-weight: 500;
             color: #64748b;
+            font-weight: 500;
         }
 
         .detail-value {
             font-weight: 600;
-            color: var(--dark-color);
             text-align: left;
         }
 
-        .print-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            color: var(--primary-color);
-            text-decoration: none;
-            font-weight: 600;
-            transition: color 0.3s ease;
-        }
-
-        .print-link:hover {
-            color: var(--secondary-color);
-        }
-
-        /* Loading */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            backdrop-filter: blur(5px);
-        }
-
-        .loading-overlay.show {
-            display: flex;
-        }
-
-        .loading-content {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 40px;
-            text-align: center;
-            box-shadow: var(--shadow-xl);
-            max-width: 300px;
-        }
-
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #e2e8f0;
-            border-top: 4px solid var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .loading-text {
-            color: var(--dark-color);
-            font-weight: 500;
-        }
-
-        /* Telegram Status */
-        .telegram-status {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #0088cc;
-            color: white;
-            padding: 12px 20px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-lg);
-            transform: translateY(100px);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-            max-width: 300px;
-        }
-
-        .telegram-status.show {
-            transform: translateY(0);
-        }
-
-        /* Alert Popup for Confirmed Orders */
-        .confirmed-alert {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: #fffbeb;
-            border: 2px solid var(--warning-color);
-            border-radius: var(--border-radius);
-            padding: 30px;
-            box-shadow: var(--shadow-xl);
-            z-index: 10000;
-            text-align: center;
-            max-width: 400px;
-            display: none;
-            animation: popIn 0.3s ease-out;
-        }
-
-        .confirmed-alert.show {
-            display: block;
-        }
-
-        .confirmed-alert-backdrop {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 9999;
-            display: none;
-        }
-
-        .confirmed-alert-backdrop.show {
-            display: block;
-        }
-
-        .confirmed-alert h3 {
-            color: var(--warning-color);
-            margin-bottom: 15px;
-            font-size: 1.3rem;
-        }
-
-        .confirmed-alert p {
-            color: #92400e;
-            margin-bottom: 20px;
-            line-height: 1.6;
-        }
-
-        .confirmed-alert-btn {
-            background: var(--warning-color);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .confirmed-alert-btn:hover {
-            background: #d97706;
-            transform: translateY(-1px);
-        }
-
-        @keyframes popIn {
-            0% {
-                opacity: 0;
-                transform: translate(-50%, -50%) scale(0.8);
-            }
-            100% {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(1);
-            }
-        }
-
-        /* Queue Management */
-        .queue-section {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 24px;
-            box-shadow: var(--shadow-lg);
-            margin-bottom: 20px;
-            border: 2px solid #e2e8f0;
-            transition: all 0.3s ease;
-        }
-
-        .queue-section.active {
-            border-color: var(--warning-color);
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
-        }
-
-        .queue-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 16px;
-            border-bottom: 2px solid #e2e8f0;
-        }
-
-        .queue-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--dark-color);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .queue-controls {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .queue-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 12px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow-md);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .queue-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .queue-btn:hover::before {
-            left: 100%;
-        }
-
-        .queue-btn.start {
-            background: var(--success-color);
-            color: white;
-        }
-
-        .queue-btn.pause {
-            background: var(--warning-color);
-            color: white;
-        }
-
-        .queue-btn.clear {
-            background: var(--error-color);
-            color: white;
-        }
-
-        .queue-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .queue-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .queue-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .queue-stat {
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 16px;
-            text-align: center;
-            border: 1px solid #e2e8f0;
-        }
-
-        .queue-stat-number {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .queue-stat-number.total { color: var(--primary-color); }
-        .queue-stat-number.processing { color: var(--warning-color); }
-        .queue-stat-number.completed { color: var(--success-color); }
-        .queue-stat-number.failed { color: var(--error-color); }
-
-        .queue-stat-label {
-            font-size: 0.8rem;
-            color: #64748b;
-            font-weight: 500;
-        }
-
-        .queue-progress {
-            width: 100%;
-            height: 12px;
-            background: #e2e8f0;
-            border-radius: 6px;
-            overflow: hidden;
-            margin-bottom: 20px;
-            position: relative;
-        }
-
-        .queue-progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, var(--success-color), var(--primary-color));
-            transition: width 0.3s ease;
-            border-radius: 6px;
-        }
-
-        .queue-progress-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: white;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-        }
-
-        .queue-list {
-            max-height: 300px;
-            overflow-y: auto;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-        }
-
-        .queue-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 20px;
-            border-bottom: 1px solid #e2e8f0;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            background: white;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
-        .queue-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .queue-item:last-child {
-            border-bottom: none;
-        }
-
-        .queue-item.processing {
-            background: #fffbeb;
-            border-left: 4px solid var(--warning-color);
-            animation: pulse 2s infinite;
-        }
-
-        .queue-item.completed {
-            background: #ecfdf5;
-            border-left: 4px solid var(--success-color);
-            animation: slideIn 0.5s ease-out;
-        }
-
-        .queue-item.failed {
-            background: #fef2f2;
-            border-left: 4px solid var(--error-color);
-            animation: shake 0.5s ease-in-out;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
-        .queue-item-info {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .queue-item-barcode {
-            font-weight: 600;
-            color: var(--dark-color);
-        }
-
-        .queue-item-time {
-            font-size: 0.8rem;
-            color: #64748b;
-        }
-
-        .queue-item-status {
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .queue-item-status.pending {
-            background: #e2e8f0;
-            color: #64748b;
-        }
-
-        .queue-item-status.processing {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .queue-item-status.completed {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .queue-item-status.failed {
-            background: #fecaca;
-            color: #991b1b;
-        }
-
-        /* Processing Animation */
-        .processing-spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid #e2e8f0;
-            border-top: 2px solid var(--warning-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        /* Responsive Design */
-        @media (min-width: 768px) {
-            .app-container {
-                grid-template-columns: 1fr 400px;
-                gap: 30px;
-            }
-            
-            .scanner-section {
-                grid-row: 1 / -1;
-            }
-        }
-
-        @media (max-width: 1024px) {
-            .content-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .left-column {
-                position: static;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .app-container {
-                padding: 15px;
-                gap: 15px;
-            }
-            
-            .content-grid {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-            
-            .left-column, .right-column {
-                position: static;
-            }
-            
-            .app-title {
-                font-size: 2rem;
-            }
-            
-            .video-container {
-                height: 300px;
-            }
-            
-            .scan-frame {
-                width: 220px;
-                height: 140px;
-            }
-            
-            .controls-section {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
-            }
-            
-            .control-btn {
-                padding: 12px 16px;
-                font-size: 0.9rem;
-            }
-            
-            .queue-controls {
-                flex-direction: column;
-                gap: 8px;
-            }
-            
-            .queue-btn {
-                padding: 10px 14px;
-                font-size: 0.8rem;
-            }
-            
-            .queue-stats {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .queue-stat {
-                padding: 12px;
-            }
-            
-            .queue-stat-number {
-                font-size: 1.5rem;
-            }
-            
-            .result-details {
-                grid-template-columns: 1fr;
-            }
-            
-            .detail-item {
-                flex-direction: column;
-                gap: 4px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .controls-section {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .control-btn {
-                padding: 14px;
-                font-size: 0.8rem;
-            }
-            
-            .queue-stats {
-                grid-template-columns: 1fr;
-            }
-            
-            .queue-header {
-                flex-direction: column;
-                gap: 15px;
-                align-items: flex-start;
-            }
-            
-            .queue-controls {
-                width: 100%;
-                flex-direction: row;
-                justify-content: space-between;
-            }
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
         /* Empty State */
-        .empty-state {
+        .empty {
             text-align: center;
             padding: 40px 20px;
             color: #64748b;
         }
 
-        .empty-state i {
+        .empty i {
             font-size: 3rem;
-            margin-bottom: 16px;
+            margin-bottom: 10px;
             opacity: 0.5;
         }
 
-        .empty-state h3 {
-            margin-bottom: 8px;
-            color: var(--dark-color);
+        /* Loading */
+        .loading {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading.show {
+            display: flex;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 30px;
+            border-radius: var(--radius);
+            text-align: center;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--dark);
+            color: white;
+            padding: 12px 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+            max-width: 300px;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.4rem;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .controls {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .result-details {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="app-container">
+    <div class="container">
         <!-- Header -->
-        <div class="app-header">
-            <h1 class="app-title">
-                <i class="fas fa-qrcode"></i> مسح الباركود 
-                <span class="auto-mode-indicator">🔄 تلقائي</span>
+        <div class="header">
+            <h1>
+                <i class="fas fa-qrcode"></i>
+                مسح الباركود
+                <span class="badge">🔄 تلقائي</span>
             </h1>
-            <p class="app-subtitle">نظام إدارة المخزون المتطور</p>
         </div>
 
-        <!-- Content Grid -->
-        <div class="content-grid">
-            <!-- Left Column - Scanner -->
-            <div class="left-column">
-                <!-- Scanner Section -->
-        <div class="scanner-section">
-            <div class="scanner-header">
-                <h2 class="scanner-title">
-                    <i class="fas fa-camera"></i>
-                    كاميرا المسح
-                </h2>
+        <!-- Scanner Section -->
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-camera"></i>
+                كاميرا المسح
             </div>
 
-            <div class="video-container" id="videoContainer">
+            <div class="scanner-wrapper">
                 <video id="video" autoplay muted playsinline></video>
                 <div class="scan-overlay">
                     <div class="scan-frame" id="scanFrame">
@@ -1156,1743 +522,572 @@
                 </div>
             </div>
 
-            <div class="controls-section">
-                <button class="control-btn" id="startBtn" style="display: none;">
-                    <i class="fas fa-play"></i>
-                    بدء المسح
+            <div class="controls">
+                <button class="btn btn-primary" id="startBtn" style="display: none;">
+                    <i class="fas fa-play"></i> بدء
                 </button>
-                <button class="control-btn" id="rotateCameraBtn" disabled>
-                    <i class="fas fa-camera"></i>
-                    تغيير الكاميرا
+                <button class="btn btn-primary" id="cameraBtn" disabled>
+                    <i class="fas fa-sync"></i> تبديل
                 </button>
-                <button class="control-btn warning" id="retryBtn" style="display: none;">
-                    <i class="fas fa-redo"></i>
-                    إعادة المحاولة
+                <button class="btn btn-warning" id="flashBtn" disabled>
+                    <i class="fas fa-lightbulb"></i> فلاش
                 </button>
-                <button class="control-btn" id="flashBtn" disabled>
-                    <i class="fas fa-flashlight"></i>
-                    الفلاش
-                </button>
-                <button class="control-btn error" id="stopBtn" disabled>
-                    <i class="fas fa-stop"></i>
-                    إيقاف
+                <button class="btn btn-error" id="stopBtn" disabled>
+                    <i class="fas fa-stop"></i> إيقاف
                 </button>
             </div>
 
-            <div class="status-section" id="statusSection">
-                <div class="status-text" id="statusText">
-                    <i class="fas fa-info-circle"></i>
-                    النظام يعمل تلقائياً - الكاميرا ثابتة والطلبات تنتقل للطابور
-                </div>
+            <div class="status info" id="status">
+                <i class="fas fa-info-circle"></i>
+                <span id="statusText">جاري التهيئة...</span>
             </div>
 
-            <div class="stats-section">
-                <div class="stat-card">
+            <div class="stats">
+                <div class="stat">
                     <div class="stat-number" id="scannedCount">0</div>
-                    <div class="stat-label">إجمالي المسح</div>
+                    <div class="stat-label">المسح</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat">
                     <div class="stat-number" id="successCount">0</div>
                     <div class="stat-label">نجح</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat">
                     <div class="stat-number" id="errorCount">0</div>
                     <div class="stat-label">خطأ</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat">
                     <div class="stat-number" id="pendingCount">0</div>
-                    <div class="stat-label">في الانتظار</div>
-                </div>
-            </div>
-        </div>
-            </div>
-
-            <!-- Right Column - Data and Results -->
-            <div class="right-column">
-                <!-- Queue Management Section -->
-        <div class="queue-section" id="queueSection">
-            <div class="queue-header">
-                <h2 class="queue-title">
-                    <i class="fas fa-list-ol"></i>
-                    طابور المعالجة
-                </h2>
-                <div class="queue-controls">
-                    <button class="queue-btn start" id="startQueueBtn" disabled>
-                        <i class="fas fa-play"></i>
-                        تشغيل الطابور
-                    </button>
-                    <button class="queue-btn pause" id="pauseQueueBtn" disabled>
-                        <i class="fas fa-pause"></i>
-                        إيقاف مؤقت
-                    </button>
-                    <button class="queue-btn clear" id="clearQueueBtn">
-                        <i class="fas fa-trash"></i>
-                        مسح الطابور
-                    </button>
-                </div>
-            </div>
-
-            <div class="queue-stats">
-                <div class="queue-stat">
-                    <div class="queue-stat-number total" id="queueTotal">0</div>
-                    <div class="queue-stat-label">إجمالي</div>
-                </div>
-                <div class="queue-stat">
-                    <div class="queue-stat-number processing" id="queueProcessing">0</div>
-                    <div class="queue-stat-label">قيد المعالجة</div>
-                </div>
-                <div class="queue-stat">
-                    <div class="queue-stat-number completed" id="queueCompleted">0</div>
-                    <div class="queue-stat-label">مكتمل</div>
-                </div>
-                <div class="queue-stat">
-                    <div class="queue-stat-number failed" id="queueFailed">0</div>
-                    <div class="queue-stat-label">فشل</div>
-                </div>
-            </div>
-
-            <div class="queue-progress">
-                <div class="queue-progress-bar" id="queueProgressBar" style="width: 0%"></div>
-                <div class="queue-progress-text" id="queueProgressText">0%</div>
-            </div>
-
-            <div class="queue-list" id="queueList">
-                <div class="empty-state">
-                    <i class="fas fa-clock"></i>
-                    <h3>لا توجد عناصر في الطابور</h3>
-                    <p>ابدأ بمسح الباركودات لإضافتها للطابور</p>
+                    <div class="stat-label">انتظار</div>
                 </div>
             </div>
         </div>
 
         <!-- Results Section -->
-        <div class="results-section">
-            <div class="results-header">
-                <h2 class="results-title">
-                    <i class="fas fa-list-alt"></i>
-                    نتائج المسح
-                </h2>
-                <button class="clear-btn" onclick="clearAllResults()">
-                    <i class="fas fa-trash-alt"></i>
-                    مسح الكل
+        <div class="card">
+            <div class="card-title" style="justify-content: space-between;">
+                <span>
+                    <i class="fas fa-list"></i>
+                    النتائج والطابور
+                </span>
+                <button class="btn btn-error" style="padding: 6px 12px; font-size: 0.8rem;" onclick="clearResults()">
+                    <i class="fas fa-trash"></i> مسح
                 </button>
             </div>
-            
-            <div class="results-container" id="resultsContainer">
-                <div class="empty-state">
-                    <i class="fas fa-camera"></i>
-                    <h3>النظام جاهز للمسح</h3>
-                    <p>الكاميرا ثابتة - امسح الباركود لتنتقل الطلبات للطابور</p>
+
+            <!-- Queue -->
+            <div class="queue" id="queueList">
+                <div class="empty">
+                    <i class="fas fa-clock"></i>
+                    <p>لا توجد عناصر في الطابور</p>
                 </div>
             </div>
+
+            <!-- Results -->
+            <div class="results" id="resultsList" style="margin-top: 20px;">
+                <div class="empty">
+                    <i class="fas fa-search"></i>
+                    <p>لا توجد نتائج بعد</p>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
+    <!-- Loading -->
+    <div class="loading" id="loading">
         <div class="loading-content">
             <div class="spinner"></div>
-            <div class="loading-text">جاري معالجة البيانات...</div>
+            <div>جاري المعالجة...</div>
         </div>
     </div>
 
-    <!-- Telegram Status -->
-    <div class="telegram-status" id="telegramStatus"></div>
-
-    <!-- Confirmed Order Alert -->
-    <div class="confirmed-alert-backdrop" id="confirmedAlertBackdrop"></div>
-    <div class="confirmed-alert" id="confirmedAlert">
-        <h3>🔄 تنبيه: طلب مؤكد مسبقاً</h3>
-        <p>هذا الطلب مؤكد مسبقاً ولم يتم إرساله للتليجرام. يمكنك الآن مسح وصل جديد.</p>
-        <button class="confirmed-alert-btn" onclick="closeConfirmedAlert()">متابعة المسح</button>
-    </div>
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
 
     <canvas id="canvas" style="display: none;"></canvas>
 
     <script>
-        // إعدادات API والتيليجرام
+        // Config
         const API_BASE_URL = 'https://mgkw-spongy.pythonanywhere.com/api';
         const TELEGRAM_TOKEN = '8254979672:AAGuR8kZHsFd4eBA2DuZajLrHgUDOImg51I';
         const TELEGRAM_CHAT_ID = '-1002337640682';
 
-        // متغيرات عامة
-        let video, canvas, ctx;
-        let stream = null;
+        // State
+        let video, canvas, ctx, stream;
         let cameras = [];
-        let currentCameraIndex = 0;
+        let currentCamera = 0;
         let isScanning = false;
-        let scannedCodes = new Set(); // تتبع الباركودات الممسوحة
+        let isFlashOn = false;
+        let scannedCodes = new Set();
         let stats = { scanned: 0, success: 0, error: 0, pending: 0 };
-        let scanResults = []; // تخزين جميع النتائج
-        let isFlashOn = false; // حالة الفلاش
-        let connectionMonitorInterval = null; // مراقبة الاتصال
-        
-        // نظام الطابور
-        let processingQueue = []; // طابور المعالجة
-        let isProcessingQueue = false; // حالة معالجة الطابور
-        let maxConcurrentProcessing = 3; // عدد العمليات المتزامنة
-        let activeProcesses = 0; // عدد العمليات النشطة
-        let queueStats = { total: 0, processed: 0, failed: 0 };
+        let queue = [];
+        let isProcessing = false;
+        let activeProcesses = 0;
+        const MAX_CONCURRENT = 3;
 
-        // العناصر
-        const elements = {
+        // Elements
+        const el = {
+            video: document.getElementById('video'),
+            canvas: document.getElementById('canvas'),
             startBtn: document.getElementById('startBtn'),
-            rotateCameraBtn: document.getElementById('rotateCameraBtn'),
-            retryBtn: document.getElementById('retryBtn'),
+            cameraBtn: document.getElementById('cameraBtn'),
             flashBtn: document.getElementById('flashBtn'),
             stopBtn: document.getElementById('stopBtn'),
-            statusSection: document.getElementById('statusSection'),
+            status: document.getElementById('status'),
             statusText: document.getElementById('statusText'),
-            loadingOverlay: document.getElementById('loadingOverlay'),
-            resultsContainer: document.getElementById('resultsContainer'),
-            telegramStatus: document.getElementById('telegramStatus'),
             scanFrame: document.getElementById('scanFrame'),
-            videoContainer: document.getElementById('videoContainer'),
-            // عناصر الطابور
-            queueSection: document.getElementById('queueSection'),
-            startQueueBtn: document.getElementById('startQueueBtn'),
-            pauseQueueBtn: document.getElementById('pauseQueueBtn'),
-            clearQueueBtn: document.getElementById('clearQueueBtn'),
+            loading: document.getElementById('loading'),
+            toast: document.getElementById('toast'),
             queueList: document.getElementById('queueList'),
-            queueTotal: document.getElementById('queueTotal'),
-            queueProcessing: document.getElementById('queueProcessing'),
-            queueCompleted: document.getElementById('queueCompleted'),
-            queueFailed: document.getElementById('queueFailed'),
-            queueProgressBar: document.getElementById('queueProgressBar'),
-            queueProgressText: document.getElementById('queueProgressText'),
+            resultsList: document.getElementById('resultsList'),
+            scannedCount: document.getElementById('scannedCount'),
+            successCount: document.getElementById('successCount'),
+            errorCount: document.getElementById('errorCount'),
             pendingCount: document.getElementById('pendingCount')
         };
 
-        // تهيئة التطبيق
-        window.addEventListener('load', () => {
-            video = document.getElementById('video');
-            canvas = document.getElementById('canvas');
-            ctx = canvas.getContext('2d');
-            initializeApp();
-        });
+        // Init
+        window.addEventListener('load', init);
 
-        async function initializeApp() {
+        async function init() {
             try {
-                // فحص الاتصال بالإنترنت أولاً
-                updateStatus('جاري فحص الاتصال...', 'info');
-                const isConnected = await checkInternetConnection();
-                if (!isConnected) {
-                    throw new Error('لا يوجد اتصال بالإنترنت. يرجى التحقق من الاتصال والمحاولة مرة أخرى');
-                }
-
-                // فحص دعم المتصفح للوسائط
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    throw new Error('المتصفح لا يدعم الوصول إلى الكاميرا. يرجى استخدام متصفح حديث');
-                }
-
-                // فحص دعم jsQR
-                if (typeof jsQR === 'undefined') {
-                    throw new Error('مكتبة jsQR غير محملة. يرجى التحقق من الاتصال بالإنترنت');
-                }
-
-                updateStatus('جاري تهيئة الكاميرا...', 'info');
+                ctx = el.canvas.getContext('2d');
                 await getCameras();
-                setupEventListeners();
-                
-                // بدء الطابور تلقائياً عند تحميل الصفحة
-                isProcessingQueue = true;
-                elements.startQueueBtn.disabled = true;
-                elements.pauseQueueBtn.disabled = false;
-                elements.queueSection.classList.add('active');
-                
-                // تحديث عرض الطابور للحالة الجديدة
-                updateQueueDisplay();
-                
-                // بدء المسح تلقائياً مع الكاميرا
+                setupListeners();
                 await startScanning();
-                
-                updateStatus('� النظام يعمل - الكاميرا ثابتة والطلبات تنتقل للطابور', 'success');
-                
+                updateStatus('النظام جاهز - امسح الباركود', 'success');
+                isProcessing = true;
             } catch (error) {
-                console.error('خطأ في تهيئة التطبيق:', error);
-                updateStatus('خطأ في تهيئة التطبيق: ' + error.message, 'error');
-                
-                // عرض حلول مقترحة
-                showTroubleshootingTips(error.message);
-            }
-        }
-
-        // فحص الاتصال بالإنترنت
-        async function checkInternetConnection() {
-            try {
-                // محاولة الوصول لخدمة Google DNS
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000); // مهلة 5 ثوان
-
-                const response = await fetch('https://dns.google/resolve?name=google.com&type=A', {
-                    method: 'GET',
-                    signal: controller.signal,
-                    cache: 'no-cache'
-                });
-                
-                clearTimeout(timeoutId);
-                
-                if (response.ok) {
-                    return true;
-                }
-                
-                // محاولة بديلة مع موقع آخر
-                const alternativeResponse = await fetch('https://httpbin.org/get', {
-                    method: 'GET',
-                    signal: controller.signal,
-                    cache: 'no-cache'
-                });
-                
-                return alternativeResponse.ok;
-                
-            } catch (error) {
-                console.warn('فحص الاتصال الأساسي فشل، جاري المحاولة البديلة:', error.message);
-                
-                // محاولة بديلة باستخدام navigator.onLine
-                if (navigator.onLine) {
-                    try {
-                        // محاولة أخيرة مع API بسيط
-                        const simpleResponse = await fetch(`${API_BASE_URL}/health`, {
-                            method: 'GET',
-                            timeout: 3000
-                        });
-                        return simpleResponse.ok;
-                    } catch (apiError) {
-                        console.warn('فحص API فشل:', apiError.message);
-                        // إذا فشل الـ API ولكن navigator.onLine يقول أن هناك اتصال
-                        // نعتبر أن هناك اتصال بالإنترنت ولكن قد يكون هناك مشكلة بالـ API
-                        return true;
-                    }
-                }
-                
-                return false;
-            }
-        }
-
-        // بدء مراقبة الاتصال الدورية
-        function startConnectionMonitoring() {
-            // فحص الاتصال كل 30 ثانية
-            connectionMonitorInterval = setInterval(async () => {
-                const isConnected = await checkInternetConnection();
-                
-                if (!isConnected) {
-                    updateStatus('⚠️ انقطع الاتصال بالإنترنت - جاري المحاولة للاتصال مرة أخرى...', 'warning');
-                    
-                    // إيقاف معالجة الطابور مؤقتاً
-                    if (isProcessingQueue) {
-                        isProcessingQueue = false;
-                        elements.startQueueBtn.disabled = false;
-                        elements.pauseQueueBtn.disabled = true;
-                    }
-                } else {
-                    // إعادة تشغيل الطابور إذا كان متوقفاً بسبب انقطاع الاتصال
-                    if (!isProcessingQueue) {
-                        isProcessingQueue = true;
-                        elements.startQueueBtn.disabled = true;
-                        elements.pauseQueueBtn.disabled = false;
-                        updateStatus('✅ تم استعادة الاتصال - الطابور يعمل تلقائياً', 'success');
-                    }
-                }
-            }, 30000); // كل 30 ثانية
-        }
-
-        // إيقاف مراقبة الاتصال
-        function stopConnectionMonitoring() {
-            if (connectionMonitorInterval) {
-                clearInterval(connectionMonitorInterval);
-                connectionMonitorInterval = null;
+                updateStatus('خطأ: ' + error.message, 'error');
             }
         }
 
         async function getCameras() {
             try {
-                // طلب إذن الوصول إلى الكاميرا أولاً
                 await navigator.mediaDevices.getUserMedia({ video: true })
-                    .then(stream => {
-                        // إيقاف الكاميرا المؤقتة
-                        stream.getTracks().forEach(track => track.stop());
-                    });
-
+                    .then(s => s.getTracks().forEach(t => t.stop()));
+                
                 const devices = await navigator.mediaDevices.enumerateDevices();
-                cameras = devices.filter(device => device.kind === 'videoinput');
+                cameras = devices.filter(d => d.kind === 'videoinput');
                 
-                console.log('الكاميرات المتاحة:', cameras);
-                
-                if (cameras.length === 0) {
-                    throw new Error('لم يتم العثور على كاميرا متاحة');
-                }
-                
-                // إخفاء زر تغيير الكاميرا إذا كان هناك كاميرا واحدة فقط
-                if (cameras.length === 1) {
-                    elements.rotateCameraBtn.style.display = 'none';
-                }
-                
-                updateStatus(`تم العثور على ${cameras.length} كاميرا`, 'success');
-                
+                if (cameras.length === 0) throw new Error('لا توجد كاميرا');
+                if (cameras.length === 1) el.cameraBtn.style.display = 'none';
             } catch (error) {
-                console.error('خطأ في الوصول للكاميرا:', error);
-                
-                if (error.name === 'NotAllowedError') {
-                    throw new Error('تم رفض الإذن للوصول إلى الكاميرا. يرجى السماح بالوصول وإعادة تحميل الصفحة');
-                } else if (error.name === 'NotFoundError') {
-                    throw new Error('لم يتم العثور على كاميرا متصلة بالجهاز');
-                } else if (error.name === 'NotSupportedError') {
-                    throw new Error('المتصفح لا يدعم الوصول إلى الكاميرا');
-                } else if (error.name === 'NotReadableError') {
-                    throw new Error('الكاميرا مستخدمة من تطبيق آخر');
-                } else {
-                    throw new Error('خطأ غير معروف في الوصول إلى الكاميرا: ' + error.message);
-                }
+                throw new Error('خطأ في الوصول للكاميرا');
             }
         }
 
-        function setupEventListeners() {
-            elements.startBtn.addEventListener('click', startScanning);
-            elements.stopBtn.addEventListener('click', stopScanning);
-            elements.rotateCameraBtn.addEventListener('click', rotateCamera);
-            elements.retryBtn.addEventListener('click', retryInitialization);
-            elements.flashBtn.addEventListener('click', toggleFlash);
-            
-            // مستمعي أحداث الطابور
-            elements.startQueueBtn.addEventListener('click', startQueueProcessing);
-            elements.pauseQueueBtn.addEventListener('click', pauseQueueProcessing);
-            elements.clearQueueBtn.addEventListener('click', clearQueue);
-            
-            // إضافة مستمع لإغلاق التنبيه بالنقر على الخلفية
-            document.getElementById('confirmedAlertBackdrop').addEventListener('click', closeConfirmedAlert);
-        }
-
-        // إعادة تهيئة التطبيق
-        async function retryInitialization() {
-            // إخفاء زر إعادة المحاولة
-            elements.retryBtn.style.display = 'none';
-            
-            // إزالة رسائل الأخطاء السابقة
-            const troubleshootingTips = document.querySelector('.troubleshooting-tips');
-            if (troubleshootingTips) {
-                troubleshootingTips.remove();
-            }
-            
-            // إعادة تعيين المتغيرات
-            cameras = [];
-            currentCameraIndex = 0;
-            
-            // إزالة أي video stream موجود
-            if (elements.video.srcObject) {
-                const tracks = elements.video.srcObject.getTracks();
-                tracks.forEach(track => track.stop());
-                elements.video.srcObject = null;
-            }
-            
-            // إعادة التهيئة
-            try {
-                await initializeApp();
-                showMessage('تم إعادة تهيئة التطبيق بنجاح', 'success');
-            } catch (error) {
-                showMessage('فشلت إعادة التهيئة: ' + error.message, 'error');
-            }
-        }
-
-        // عرض نصائح حل المشاكل
-        function showTroubleshootingTips(errorMessage) {
-            const troubleshootingDiv = document.createElement('div');
-            troubleshootingDiv.className = 'troubleshooting-tips';
-            troubleshootingDiv.style.cssText = `
-                background: #fef2f2;
-                border: 2px solid #ef4444;
-                border-radius: 12px;
-                padding: 20px;
-                margin: 20px 0;
-                color: #991b1b;
-            `;
-
-            let tips = '';
-            
-            if (errorMessage.includes('رفض الإذن')) {
-                tips = `
-                    <h3>🔒 حل مشكلة إذن الكاميرا:</h3>
-                    <ul>
-                        <li>اضغط على أيقونة القفل/الكاميرا في شريط العنوان</li>
-                        <li>اختر "السماح" للوصول إلى الكاميرا</li>
-                        <li>أعد تحميل الصفحة</li>
-                        <li>تأكد من عدم حجب الكاميرا في إعدادات المتصفح</li>
-                    </ul>
-                `;
-            } else if (errorMessage.includes('لم يتم العثور')) {
-                tips = `
-                    <h3>📷 حل مشكلة عدم وجود كاميرا:</h3>
-                    <ul>
-                        <li>تأكد من توصيل الكاميرا بالجهاز</li>
-                        <li>تحقق من تشغيل الكاميرا في إعدادات الجهاز</li>
-                        <li>جرب إغلاق التطبيقات الأخرى التي قد تستخدم الكاميرا</li>
-                        <li>أعد تشغيل المتصفح</li>
-                    </ul>
-                `;
-            } else if (errorMessage.includes('مستخدمة من تطبيق آخر')) {
-                tips = `
-                    <h3>🔄 حل مشكلة الكاميرا المشغولة:</h3>
-                    <ul>
-                        <li>أغلق جميع التطبيقات الأخرى التي تستخدم الكاميرا</li>
-                        <li>أغلق علامات التبويب الأخرى التي تستخدم الكاميرا</li>
-                        <li>أعد تشغيل المتصفح</li>
-                        <li>أعد تشغيل الجهاز إذا لزم الأمر</li>
-                    </ul>
-                `;
-            } else {
-                tips = `
-                    <h3>🛠️ حلول عامة:</h3>
-                    <ul>
-                        <li>تأكد من استخدام متصفح حديث (Chrome, Firefox, Edge)</li>
-                        <li>تحقق من الاتصال بالإنترنت</li>
-                        <li>امنح الإذن للوصول إلى الكاميرا</li>
-                        <li>أعد تحميل الصفحة</li>
-                        <li>جرب في وضع التصفح الخاص</li>
-                    </ul>
-                `;
-            }
-
-            troubleshootingDiv.innerHTML = tips + `
-                <button onclick="this.parentElement.remove(); location.reload();" 
-                        style="background: #ef4444; color: white; border: none; padding: 10px 20px; 
-                               border-radius: 8px; cursor: pointer; margin-top: 10px;">
-                    إعادة المحاولة
-                </button>
-            `;
-
-            // إضافة النصائح بعد قسم الحالة
-            elements.statusSection.after(troubleshootingDiv);
+        function setupListeners() {
+            el.startBtn.addEventListener('click', startScanning);
+            el.stopBtn.addEventListener('click', stopScanning);
+            el.cameraBtn.addEventListener('click', switchCamera);
+            el.flashBtn.addEventListener('click', toggleFlash);
         }
 
         async function startScanning() {
             try {
                 showLoading(true);
-                updateStatus('جاري بدء الكاميرا...', 'info');
-                
                 const constraints = {
                     video: {
-                        deviceId: cameras[currentCameraIndex]?.deviceId,
-                        width: { ideal: 1920, max: 1920 },
-                        height: { ideal: 1080, max: 1080 },
-                        facingMode: currentCameraIndex === 0 ? 'environment' : 'user',
-                        frameRate: { ideal: 30, max: 30 }
+                        deviceId: cameras[currentCamera]?.deviceId,
+                        facingMode: currentCamera === 0 ? 'environment' : 'user',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
                     }
                 };
 
-                // محاولة الحصول على الكاميرا مع معالجة محسنة للأخطاء
                 try {
                     stream = await navigator.mediaDevices.getUserMedia(constraints);
-                } catch (error) {
-                    // إعادة المحاولة بقيود أقل تعقيداً
-                    console.warn('فشل الوصول بالقيود المتقدمة، جاري المحاولة بقيود أساسية:', error);
-                    const basicConstraints = {
-                        video: {
-                            facingMode: currentCameraIndex === 0 ? 'environment' : 'user'
-                        }
-                    };
-                    stream = await navigator.mediaDevices.getUserMedia(basicConstraints);
+                } catch (e) {
+                    stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 }
 
-                video.srcObject = stream;
-
+                el.video.srcObject = stream;
                 await new Promise((resolve, reject) => {
-                    video.onloadedmetadata = () => {
-                        video.play().then(() => {
-                            canvas.width = video.videoWidth;
-                            canvas.height = video.videoHeight;
+                    el.video.onloadedmetadata = () => {
+                        el.video.play().then(() => {
+                            el.canvas.width = el.video.videoWidth;
+                            el.canvas.height = el.video.videoHeight;
                             resolve();
                         }).catch(reject);
                     };
-                    
-                    video.onerror = () => {
-                        reject(new Error('خطأ في تحميل الفيديو'));
-                    };
-                    
-                    // مهلة زمنية للتحميل
-                    setTimeout(() => {
-                        reject(new Error('انتهت مهلة تحميل الفيديو'));
-                    }, 10000);
+                    setTimeout(() => reject(new Error('انتهت المهلة')), 10000);
                 });
 
                 isScanning = true;
-                elements.startBtn.disabled = true;
-                elements.stopBtn.disabled = false;
-                elements.rotateCameraBtn.disabled = cameras.length < 2;
-                elements.videoContainer.classList.add('scanning');
+                el.startBtn.disabled = true;
+                el.stopBtn.disabled = false;
+                el.cameraBtn.disabled = cameras.length < 2;
                 
-                // تفعيل الفلاش إذا كان متاحاً
                 const track = stream.getVideoTracks()[0];
-                if (track && track.getCapabilities && track.getCapabilities().torch) {
-                    elements.flashBtn.disabled = false;
+                if (track?.getCapabilities?.().torch) {
+                    el.flashBtn.disabled = false;
                 }
 
-                updateStatus('📱 المسح نشط - وجه الكاميرا نحو الباركود، الطلبات ستنتقل للطابور تلقائياً', 'success');
+                updateStatus('المسح نشط', 'success');
                 showLoading(false);
-                
-                updateScanningState(); // تحديث حالة نظام الطابور
-                
-                setTimeout(() => {
-                    requestAnimationFrame(scanBarcode);
-                }, 500);
-                
+                scanLoop();
             } catch (error) {
                 showLoading(false);
-                console.error('خطأ في بدء المسح:', error);
-                
-                let errorMessage = 'خطأ في بدء المسح: ';
-                
-                if (error.name === 'NotAllowedError') {
-                    errorMessage += 'تم رفض الإذن للوصول إلى الكاميرا';
-                } else if (error.name === 'NotFoundError') {
-                    errorMessage += 'لم يتم العثور على كاميرا';
-                } else if (error.name === 'NotReadableError') {
-                    errorMessage += 'الكاميرا مستخدمة من تطبيق آخر';
-                } else if (error.name === 'OverconstrainedError') {
-                    errorMessage += 'إعدادات الكاميرا غير مدعومة';
-                } else {
-                    errorMessage += error.message;
-                }
-                
-                updateStatus(errorMessage, 'error');
-                stats.error++;
-                updateStats();
-                
-                // عرض نصائح حل المشاكل
-                showTroubleshootingTips(errorMessage);
+                updateStatus('خطأ: ' + error.message, 'error');
             }
         }
 
         function stopScanning() {
             isScanning = false;
-            scannedCodes.clear(); // مسح قائمة الباركودات الممسوحة
-            
+            scannedCodes.clear();
             if (stream) {
-                stream.getTracks().forEach(track => track.stop());
+                stream.getTracks().forEach(t => t.stop());
                 stream = null;
             }
-
-            elements.startBtn.disabled = false;
-            elements.stopBtn.disabled = true;
-            elements.rotateCameraBtn.disabled = true;
-            elements.flashBtn.disabled = true;
-            elements.videoContainer.classList.remove('scanning');
-            
-            // إعادة تعيين الفلاش
-            isFlashOn = false;
-            elements.flashBtn.innerHTML = '<i class="fas fa-flashlight"></i> الفلاش';
-
-            updateStatus('تم إيقاف المسح', 'info');
-            updateScanningState(); // تحديث حالة نظام الطابور
+            el.startBtn.disabled = false;
+            el.stopBtn.disabled = true;
+            el.flashBtn.disabled = true;
+            updateStatus('تم الإيقاف', 'info');
         }
 
-        // دالة تغيير الكاميرا بين الأمامية والخلفية
-        async function rotateCamera() {
+        async function switchCamera() {
             if (!isScanning || cameras.length < 2) return;
-            
             try {
                 showLoading(true);
-                
-                // إيقاف الكاميرا الحالية
-                if (stream) {
-                    stream.getTracks().forEach(track => track.stop());
-                }
-                
-                // التبديل إلى الكاميرا التالية
-                currentCameraIndex = (currentCameraIndex + 1) % cameras.length;
-                
-                // تحديد نوع الكاميرا
-                const cameraType = currentCameraIndex === 0 ? 'خلفية' : 'أمامية';
-                
-                const constraints = {
-                    video: {
-                        deviceId: cameras[currentCameraIndex]?.deviceId,
-                        width: { ideal: 1920, max: 1920 },
-                        height: { ideal: 1080, max: 1080 },
-                        facingMode: currentCameraIndex === 0 ? 'environment' : 'user',
-                        frameRate: { ideal: 30, max: 30 }
-                    }
-                };
-
-                stream = await navigator.mediaDevices.getUserMedia(constraints);
-                video.srcObject = stream;
-
-                await new Promise(resolve => {
-                    video.onloadedmetadata = () => {
-                        video.play().then(() => {
-                            canvas.width = video.videoWidth;
-                            canvas.height = video.videoHeight;
-                            resolve();
-                        }).catch(resolve);
-                    };
-                });
-                
-                // تفعيل الفلاش إذا كان متاحاً في الكاميرا الجديدة
-                isFlashOn = false;
-                const track = stream.getVideoTracks()[0];
-                if (track && track.getCapabilities && track.getCapabilities().torch) {
-                    elements.flashBtn.disabled = false;
-                    elements.flashBtn.innerHTML = '<i class="fas fa-flashlight"></i> الفلاش';
-                } else {
-                    elements.flashBtn.disabled = true;
-                    elements.flashBtn.innerHTML = '<i class="fas fa-flashlight"></i> الفلاش';
-                }
-                
-                showLoading(false);
-                updateStatus(`تم التبديل إلى الكاميرا ال${cameraType}`, 'success');
-                
+                if (stream) stream.getTracks().forEach(t => t.stop());
+                currentCamera = (currentCamera + 1) % cameras.length;
+                await startScanning();
             } catch (error) {
                 showLoading(false);
-                updateStatus('خطأ في تغيير الكاميرا: ' + error.message, 'error');
+                updateStatus('خطأ في تبديل الكاميرا', 'error');
             }
         }
 
         async function toggleFlash() {
             if (!stream) return;
-
             try {
                 const track = stream.getVideoTracks()[0];
-                
-                if (!track) {
-                    updateStatus('لا يمكن الوصول إلى مسار الفيديو', 'error');
+                if (!track?.getCapabilities?.().torch) {
+                    showToast('الفلاش غير مدعوم');
                     return;
                 }
-
-                const capabilities = track.getCapabilities();
-                
-                if (!capabilities || !capabilities.torch) {
-                    updateStatus('الفلاش غير مدعوم في هذا الجهاز', 'warning');
-                    return;
-                }
-
                 isFlashOn = !isFlashOn;
-                
-                await track.applyConstraints({
-                    advanced: [{ torch: isFlashOn }]
-                });
-                
-                elements.flashBtn.innerHTML = isFlashOn ? 
-                    '<i class="fas fa-flashlight"></i> إطفاء الفلاش' : 
-                    '<i class="fas fa-flashlight"></i> تشغيل الفلاش';
-                    
-                updateStatus(isFlashOn ? 'تم تشغيل الفلاش' : 'تم إطفاء الفلاش', 'success');
-                
+                await track.applyConstraints({ advanced: [{ torch: isFlashOn }] });
+                el.flashBtn.innerHTML = isFlashOn ? 
+                    '<i class="fas fa-lightbulb"></i> إطفاء' : 
+                    '<i class="fas fa-lightbulb"></i> فلاش';
             } catch (error) {
-                updateStatus('خطأ في التحكم بالفلاش: ' + error.message, 'error');
-                console.error('خطأ الفلاش:', error);
+                showToast('خطأ في الفلاش');
             }
         }
 
-        function scanBarcode() {
+        function scanLoop() {
             if (!isScanning) return;
-
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(el.video, 0, 0, el.canvas.width, el.canvas.height);
+            const imageData = ctx.getImageData(0, 0, el.canvas.width, el.canvas.height);
             const code = jsQR(imageData.data, imageData.width, imageData.height);
 
-            if (code && code.data) {
-                // التحقق من عدم مسح نفس الباركود مرة أخرى
-                if (!scannedCodes.has(code.data)) {
-                    handleBarcodeDetected(code.data);
-                    scannedCodes.add(code.data);
-                    
-                    // تأثير بصري للباركود المكتشف
-                    elements.scanFrame.classList.add('barcode-detected');
-                    setTimeout(() => {
-                        elements.scanFrame.classList.remove('barcode-detected');
-                    }, 600);
-                    
-                    // إزالة الباركود من القائمة بعد 5 ثواني للسماح بمسحه مرة أخرى
-                    setTimeout(() => {
-                        scannedCodes.delete(code.data);
-                    }, 5000);
-                }
+            if (code?.data && !scannedCodes.has(code.data)) {
+                handleBarcode(code.data);
+                scannedCodes.add(code.data);
+                el.scanFrame.classList.add('detected');
+                setTimeout(() => el.scanFrame.classList.remove('detected'), 500);
+                setTimeout(() => scannedCodes.delete(code.data), 5000);
             }
 
-            requestAnimationFrame(scanBarcode);
+            requestAnimationFrame(scanLoop);
         }
 
-        async function handleBarcodeDetected(barcodeData) {
+        async function handleBarcode(barcode) {
             try {
-                // التقاط الصورة فوري عند الكشف
-                console.log('محاولة التقاط الصورة للباركود:', barcodeData);
-                const capturedImage = captureCurrentFrame();
-                
-                if (!capturedImage) {
-                    throw new Error('فشل في التقاط الصورة');
-                }
-                
-                console.log('تم التقاط الصورة بنجاح للباركود:', barcodeData);
-                
-                // تحديث الإحصائيات
+                const image = captureImage();
+                if (!image) throw new Error('فشل التقاط الصورة');
+
                 stats.scanned++;
                 updateStats();
+                vibrate([200, 100, 200]);
+                beep();
 
-                // اهتزاز الجهاز
-                if (navigator.vibrate) {
-                    navigator.vibrate([200, 100, 200]);
-                }
-
-                // تنبيه صوتي
-                playBeep();
-
-                // تأثير بصري على الكاميرا عند المسح
-                showScanSuccessEffect();
-
-                updateStatus(`تم اكتشاف باركود: ${barcodeData}`, 'success');
-
-                // إضافة إلى الطابور بدلاً من المعالجة المباشرة
-                addToQueue(barcodeData, capturedImage);
-                
+                addToQueue(barcode, image);
             } catch (error) {
-                console.error('خطأ في معالجة الباركود:', error);
-                updateStatus('خطأ في معالجة الباركود: ' + error.message, 'error');
                 stats.error++;
                 updateStats();
             }
         }
 
-        // ===== دوال مساعدة للتشخيص =====
-        
-        // دالة لاختبار التقاط الصورة (للاستخدام في وضع التطوير)
-        window.testCaptureImage = function() {
-            console.log('اختبار التقاط الصورة...');
-            const capturedImage = captureCurrentFrame();
-            if (capturedImage) {
-                console.log('✅ تم التقاط الصورة بنجاح');
-                console.log('حجم البيانات:', capturedImage.length, 'characters');
-                console.log('نوع البيانات:', capturedImage.substring(0, 30) + '...');
-                
-                // إنشاء صورة لعرضها في console (اختياري)
-                const img = new Image();
-                img.onload = function() {
-                    console.log('أبعاد الصورة:', this.width, 'x', this.height);
-                };
-                img.src = capturedImage;
-                
-                return capturedImage;
-            } else {
-                console.error('❌ فشل في التقاط الصورة');
-                return null;
-            }
-        };
-
-        // دالة لاختبار إرسال صورة تجريبية للتليجرام
-        window.testTelegramImage = async function() {
-            console.log('اختبار إرسال صورة للتليجرام...');
-            const capturedImage = captureCurrentFrame();
-            if (!capturedImage) {
-                console.error('لا يمكن التقاط الصورة');
-                return;
-            }
-            
-            const testOrderData = {
-                wasl_number: 'TEST-123',
-                order_id: 'TEST-ORDER',
-                receiver_name: 'اختبار',
-                receiver_phone: '07700000000',
-                governorate: 'بغداد',
-                total_amount: '25000',
-                net_amount: '23000',
-                status: 'غير مؤكد'
-            };
-            
+        function captureImage() {
             try {
-                await sendToTelegram(testOrderData, 'TEST-BARCODE', capturedImage);
-                console.log('✅ تم إرسال الاختبار بنجاح');
+                if (!el.video || el.video.readyState < 2) return null;
+                const canvas = document.createElement('canvas');
+                canvas.width = el.video.videoWidth;
+                canvas.height = el.video.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(el.video, 0, 0);
+                return canvas.toDataURL('image/jpeg', 0.9);
             } catch (error) {
-                console.error('❌ فشل الاختبار:', error);
-            }
-        };
-
-        // ===== وظائف نظام الطابور =====
-        
-        // إضافة باركود إلى الطابور
-        function addToQueue(barcodeData, capturedImage) {
-            // التحقق من صحة البيانات
-            if (!barcodeData) {
-                updateStatus('خطأ: باركود غير صالح', 'error');
-                return;
-            }
-            
-            if (!capturedImage) {
-                updateStatus('خطأ: لم يتم التقاط الصورة', 'error');
-                return;
-            }
-            
-            // التحقق من عدم وجود نفس الباركود في الطابور
-            const existingItem = processingQueue.find(item => item.barcode === barcodeData);
-            if (existingItem) {
-                updateStatus(`الباركود ${barcodeData} موجود بالفعل في الطابور`, 'warning');
-                return;
-            }
-
-            console.log('إضافة باركود جديد إلى الطابور:', barcodeData);
-            console.log('حجم الصورة المرفقة:', capturedImage.length, 'characters');
-
-            const queueItem = {
-                id: Date.now() + Math.random(),
-                barcode: barcodeData,
-                capturedImage: capturedImage,
-                status: 'pending',
-                timestamp: new Date(),
-                attempts: 0,
-                result: null
-            };
-
-            processingQueue.push(queueItem);
-            stats.pending++;
-            queueStats.total++;
-            
-            updateQueueDisplay();
-            updateStats();
-            
-            // تفعيل زر تشغيل الطابور
-            elements.startQueueBtn.disabled = false;
-            
-            updateStatus(`تم إضافة الباركود إلى الطابور (${processingQueue.length} في الانتظار)`, 'info');
-            
-            // بدء المعالجة التلقائية فوراً
-            if (!isProcessingQueue) {
-                startQueueProcessing();
-            } else {
-                processQueue();
+                return null;
             }
         }
 
-        // تشغيل معالجة الطابور
-        function startQueueProcessing() {
-            if (processingQueue.length === 0) {
-                updateStatus('لا توجد عناصر في الطابور للمعالجة', 'warning');
+        function addToQueue(barcode, image) {
+            if (queue.find(q => q.barcode === barcode)) {
+                showToast('الباركود موجود في الطابور');
                 return;
             }
 
-            isProcessingQueue = true;
-            elements.startQueueBtn.disabled = true;
-            elements.pauseQueueBtn.disabled = false;
-            elements.queueSection.classList.add('active');
-            
-            updateStatus('تم بدء المعالجة التلقائية للطابور...', 'success');
+            const item = {
+                id: Date.now(),
+                barcode,
+                image,
+                status: 'pending',
+                time: new Date(),
+                attempts: 0
+            };
+
+            queue.push(item);
+            stats.pending++;
+            updateStats();
+            updateQueue();
             processQueue();
         }
 
-        // إيقاف معالجة الطابور مؤقتاً
-        function pauseQueueProcessing() {
-            isProcessingQueue = false;
-            elements.startQueueBtn.disabled = false;
-            elements.pauseQueueBtn.disabled = true;
-            elements.queueSection.classList.remove('active');
-            
-            updateStatus('تم إيقاف معالجة الطابور مؤقتاً', 'warning');
-        }
-
-        // مسح الطابور
-        function clearQueue() {
-            if (isProcessingQueue) {
-                pauseQueueProcessing();
-            }
-
-            processingQueue = [];
-            queueStats = { total: 0, processed: 0, failed: 0 };
-            stats.pending = 0;
-            activeProcesses = 0;
-            
-            updateQueueDisplay();
-            updateStats();
-            
-            elements.startQueueBtn.disabled = true;
-            elements.pauseQueueBtn.disabled = true;
-            
-            updateStatus('تم مسح الطابور', 'info');
-        }
-
-        // معالجة الطابور
         async function processQueue() {
-            if (!isProcessingQueue || activeProcesses >= maxConcurrentProcessing) {
-                return;
-            }
+            if (!isProcessing || activeProcesses >= MAX_CONCURRENT) return;
 
-            const pendingItems = processingQueue.filter(item => item.status === 'pending');
-            
-            if (pendingItems.length === 0) {
-                if (activeProcesses === 0) {
-                    // انتهت جميع المعالجات
-                    const completedCount = processingQueue.filter(item => item.status === 'completed').length;
-                    const failedCount = processingQueue.filter(item => item.status === 'failed').length;
-                    const totalCount = processingQueue.length;
-                    
-                    updateStatus(`انتهت المعالجة التلقائية: ${completedCount} نجح، ${failedCount} فشل من أصل ${totalCount}`, 'success');
-                    
-                    // إبقاء الطابور يعمل لاستقبال عناصر جديدة
-                    // لا نوقف الطابور تلقائياً
-                }
-                return;
-            }
+            const pending = queue.filter(q => q.status === 'pending');
+            if (pending.length === 0) return;
 
-            // معالجة العناصر المتاحة
-            const itemsToProcess = pendingItems.slice(0, maxConcurrentProcessing - activeProcesses);
-            
-            for (const item of itemsToProcess) {
-                processQueueItem(item);
-            }
+            const items = pending.slice(0, MAX_CONCURRENT - activeProcesses);
+            items.forEach(item => processItem(item));
         }
 
-        // معالجة عنصر واحد من الطابور
-        async function processQueueItem(item) {
+        async function processItem(item) {
             activeProcesses++;
             item.status = 'processing';
             item.attempts++;
-            
-            console.log('بدء معالجة العنصر:', item.barcode, '- المحاولة رقم:', item.attempts);
-            console.log('حالة الصورة:', item.capturedImage ? 'موجودة' : 'غير موجودة');
-            
-            updateQueueItemDisplay(item);
-            updateQueueStats();
+            updateQueue();
 
             try {
-                // التحقق من وجود الصورة قبل المعالجة
-                if (!item.capturedImage) {
-                    throw new Error('لا توجد صورة مرفقة مع هذا العنصر');
-                }
+                const order = await searchOrder(item.barcode);
                 
-                // البحث في API
-                console.log('البحث عن الطلب:', item.barcode);
-                const orderData = await searchOrder(item.barcode);
-                
-                if (orderData) {
-                    console.log('تم العثور على الطلب:', orderData);
-                    
-                    // معالجة ناجحة
-                    await displayOrderResult(orderData, item.barcode);
-                    
-                    // إرسال إلى التليجرام مع معالجة أفضل للأخطاء
+                if (order) {
+                    await displayResult(order, item.barcode);
                     try {
-                        await sendToTelegram(orderData, item.barcode, item.capturedImage);
-                        console.log('تم إرسال البيانات للتليجرام بنجاح');
-                    } catch (telegramError) {
-                        console.error('فشل في إرسال البيانات للتليجرام:', telegramError);
-                        // لا نعتبر هذا فشلاً في المعالجة، فقط في الإرسال
-                        updateStatus(`تم العثور على الطلب ولكن فشل إرسال التليجرام: ${telegramError.message}`, 'warning');
+                        await sendTelegram(order, item.barcode, item.image);
+                    } catch (e) {
+                        console.error('Telegram error:', e);
                     }
-                    
                     item.status = 'completed';
-                    item.result = orderData;
                     stats.success++;
-                    queueStats.processed++;
-                    
-                    // صوت النجاح
-                    playSuccessSound();
                 } else {
-                    console.log('لم يتم العثور على الطلب:', item.barcode);
-                    
-                    // لم يتم العثور على الطلب
-                    await displayNotFoundResult(item.barcode);
+                    await displayNotFound(item.barcode);
                     item.status = 'failed';
-                    item.result = { error: 'لم يتم العثور على الطلب' };
                     stats.error++;
-                    queueStats.failed++;
-                    
-                    // صوت الفشل
-                    playErrorSound();
                 }
                 
                 stats.pending--;
-                
             } catch (error) {
-                // خطأ في المعالجة
-                console.error('خطأ في معالجة العنصر:', error);
-                
                 if (item.attempts < 3) {
-                    // إعادة المحاولة التلقائية
                     item.status = 'pending';
-                    updateStatus(`إعادة محاولة للباركود ${item.barcode} (المحاولة ${item.attempts + 1}/3)`, 'warning');
-                    
-                    // إعادة المحاولة بعد تأخير متزايد
-                    const delay = item.attempts * 2000; // 2 ثانية، 4 ثواني، 6 ثواني
-                    setTimeout(() => {
-                        if (isProcessingQueue) {
-                            processQueue();
-                        }
-                    }, delay);
+                    setTimeout(() => processQueue(), item.attempts * 2000);
                 } else {
-                    // فشل نهائي بعد 3 محاولات
                     item.status = 'failed';
-                    item.result = { error: `فشل نهائي بعد 3 محاولات: ${error.message}` };
                     stats.error++;
                     stats.pending--;
-                    queueStats.failed++;
-                    updateStatus(`فشل نهائي في معالجة الباركود ${item.barcode} بعد 3 محاولات`, 'error');
-                    
-                    // صوت الفشل النهائي
-                    playErrorSound();
                 }
             } finally {
                 activeProcesses--;
-                updateQueueItemDisplay(item);
-                updateQueueStats();
+                updateQueue();
                 updateStats();
-                
-                // متابعة معالجة العناصر التالية تلقائياً
-                setTimeout(() => {
-                    if (isProcessingQueue) {
-                        processQueue();
-                    }
-                }, 100);
-            }
-        }
-
-        // تحديث عرض الطابور
-        function updateQueueDisplay() {
-            const queueList = elements.queueList;
-            
-            if (processingQueue.length === 0) {
-                queueList.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-qrcode"></i>
-                        <h3>النظام جاهز للمسح</h3>
-                        <p>ابدأ بمسح الباركودات للمعالجة التلقائية</p>
-                    </div>
-                `;
-                return;
-            }
-
-            queueList.innerHTML = '';
-            
-            // ترتيب العناصر: قيد المعالجة أولاً، ثم في الانتظار، ثم المكتملة
-            const sortedQueue = processingQueue.sort((a, b) => {
-                const statusOrder = { processing: 0, pending: 1, completed: 2, failed: 3 };
-                return statusOrder[a.status] - statusOrder[b.status];
-            });
-
-            sortedQueue.forEach(item => {
-                const queueItemElement = createQueueItemElement(item);
-                queueList.appendChild(queueItemElement);
-            });
-        }
-
-        // إنشاء عنصر في الطابور
-        function createQueueItemElement(item) {
-            const div = document.createElement('div');
-            div.className = `queue-item ${item.status}`;
-            div.id = `queue-item-${item.id}`;
-            
-            const statusIcons = {
-                pending: '<i class="fas fa-clock"></i>',
-                processing: '<div class="processing-spinner"></div>',
-                completed: '<i class="fas fa-check"></i>',
-                failed: '<i class="fas fa-times"></i>'
-            };
-
-            const statusTexts = {
-                pending: 'في الانتظار',
-                processing: 'قيد المعالجة',
-                completed: 'مكتمل',
-                failed: 'فشل'
-            };
-
-            div.innerHTML = `
-                <div class="queue-item-info">
-                    <div class="queue-item-barcode">${item.barcode}</div>
-                    <div class="queue-item-time">${item.timestamp.toLocaleTimeString('ar-IQ')}</div>
-                    ${item.attempts > 1 ? `<div class="queue-item-time">المحاولة ${item.attempts}/3</div>` : ''}
-                    ${item.status === 'failed' && item.attempts >= 3 ? `<div class="queue-item-time" style="color: var(--error-color); font-weight: 600;">فشل نهائي بعد 3 محاولات</div>` : ''}
-                </div>
-                <div class="queue-item-status ${item.status}">
-                    ${statusIcons[item.status]} ${statusTexts[item.status]}
-                </div>
-            `;
-
-            return div;
-        }
-
-        // تحديث عرض عنصر واحد
-        function updateQueueItemDisplay(item) {
-            const element = document.getElementById(`queue-item-${item.id}`);
-            if (element) {
-                const newElement = createQueueItemElement(item);
-                element.replaceWith(newElement);
-            }
-        }
-
-        // تحديث إحصائيات الطابور
-        function updateQueueStats() {
-            const processingCount = processingQueue.filter(item => item.status === 'processing').length;
-            const completedCount = processingQueue.filter(item => item.status === 'completed').length;
-            const failedCount = processingQueue.filter(item => item.status === 'failed').length;
-            
-            elements.queueTotal.textContent = queueStats.total;
-            elements.queueProcessing.textContent = processingCount;
-            elements.queueCompleted.textContent = completedCount;
-            elements.queueFailed.textContent = failedCount;
-            
-            // تحديث شريط التقدم
-            const progress = queueStats.total > 0 ? ((completedCount + failedCount) / queueStats.total) * 100 : 0;
-            elements.queueProgressBar.style.width = `${progress}%`;
-            elements.queueProgressText.textContent = `${Math.round(progress)}%`;
-        }
-
-        // دالة التقاط الإطار الحالي
-        function captureCurrentFrame() {
-            try {
-                // التأكد من أن الفيديو جاهز ومحمل
-                if (!video || video.readyState < 2 || video.videoWidth === 0 || video.videoHeight === 0) {
-                    console.error('الفيديو غير جاهز لالتقاط الصورة');
-                    return null;
-                }
-
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = video.videoWidth;
-                tempCanvas.height = video.videoHeight;
-                const tempCtx = tempCanvas.getContext('2d');
-                
-                // رسم الفيديو على الـ canvas
-                tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
-                
-                // تحويل إلى base64 مع جودة عالية
-                const dataURL = tempCanvas.toDataURL('image/jpeg', 0.9);
-                console.log('تم التقاط الصورة بنجاح، حجم البيانات:', dataURL.length);
-                return dataURL;
-            } catch (error) {
-                console.error('خطأ في التقاط الصورة:', error);
-                return null;
+                setTimeout(() => processQueue(), 100);
             }
         }
 
         async function searchOrder(waslNumber) {
             try {
-                const response = await fetch(`${API_BASE_URL}/search/${waslNumber}`);
-                const data = await response.json();
-                
-                if (data.success && data.data) {
-                    return data.data;
-                }
-                return null;
+                const res = await fetch(`${API_BASE_URL}/search/${waslNumber}`);
+                const data = await res.json();
+                return data.success ? data.data : null;
             } catch (error) {
-                throw new Error('خطأ في الاتصال بـ API');
+                throw new Error('خطأ في API');
             }
         }
 
-        async function displayOrderResult(orderData, barcodeData) {
-            const formatValue = (value) => value || 'غير محدد';
-            
+        async function displayResult(order, barcode) {
+            const status = order.status === 'مؤكد' || order.auto_confirmed ? 
+                '<span class="result-status confirmed">✅ مؤكد</span>' :
+                '<span class="result-status pending">⚠️ غير مؤكد</span>';
 
-            // رقم تسلسلي للنتيجة
-            const serialNumber = scanResults.length + 1;
-            // تحديد الحالة مع الإيموجي المناسب
-            let statusText = '⚠️ غير مؤكد';
-            let statusClass = 'pending';
-            if (orderData.status === 'مؤكد' || orderData.auto_confirmed) {
-                statusText = '✅ مؤكد';
-                statusClass = 'confirmed';
-            } else if (orderData.status === 'قيد المعالجة') {
-                statusText = '⚡ قيد المعالجة';
-                statusClass = 'pending';
-            } else if (orderData.status === 'ملغي') {
-                statusText = '❌ ملغي';
-                statusClass = 'pending';
-            } else if (orderData.status === 'مسلم') {
-                statusText = '📦 مسلم';
-                statusClass = 'confirmed';
-            }
-            const scanTime = new Date().toLocaleString('ar-IQ');
-            const resultId = `result-${Date.now()}`;
-            const resultElement = document.createElement('div');
-            resultElement.className = 'result-item';
-            resultElement.id = resultId;
-            resultElement.innerHTML = `
-                <div class="result-header">
-                    <div class="result-id">#${serialNumber} | رقم الوصل: ${formatValue(orderData.wasl_number)}</div>
-                    <div class="result-status ${statusClass}">${statusText}</div>
-                </div>
-                <div class="result-details">
-                    <div class="detail-item">
-                        <span class="detail-label">رقم الطلب:</span>
-                        <span class="detail-value">${formatValue(orderData.order_id)}</span>
+            const html = `
+                <div class="result-item">
+                    <div class="result-header">
+                        <div class="result-id">#${order.wasl_number || barcode}</div>
+                        ${status}
                     </div>
-                    <div class="detail-item">
-                        <span class="detail-label">المرسل:</span>
-                        <span class="detail-value">${formatValue(orderData.sender)}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">اسم المستلم:</span>
-                        <span class="detail-value">${formatValue(orderData.receiver_name)}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">هاتف المستلم:</span>
-                        <span class="detail-value">${formatValue(orderData.receiver_phone)}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">منطقة المستلم:</span>
-                        <span class="detail-value">${formatValue(orderData.receiver_area)}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">المحافظة:</span>
-                        <span class="detail-value">${formatValue(orderData.governorate)}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">المبلغ الإجمالي:</span>
-                        <span class="detail-value">${formatValue(orderData.total_amount)} دينار</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">أجرة التوصيل:</span>
-                        <span class="detail-value">${formatValue(orderData.delivery_fee)} دينار</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">المبلغ الصافي:</span>
-                        <span class="detail-value">${formatValue(orderData.net_amount)} دينار</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">نوع التأكيد:</span>
-                        <span class="detail-value">${orderData.auto_confirmed ? 'تأكيد تلقائي' : 'تأكيد يدوي'}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">تاريخ التأكيد:</span>
-                        <span class="detail-value">${formatValue(orderData.confirmed_at)}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">المصدر:</span>
-                        <span class="detail-value">${formatValue(orderData.source)}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">رابط الطباعة:</span>
-                        <span class="detail-value">
-                            <a href="https://alkarar-exp.com/print_waslAll.php?wasl_id=${orderData.order_id}" 
-                               target="_blank" 
-                               class="print-link">
-                                <i class="fas fa-print"></i> طباعة الطلب
-                            </a>
-                        </span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">الباركود الممسوح:</span>
-                        <span class="detail-value">${barcodeData}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">وقت المسح:</span>
-                        <span class="detail-value">${scanTime}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">حالة الإرسال:</span>
-                        <span class="detail-value" style="color: var(--success-color); font-weight: 600;">
-                            ✅ تم الإرسال للتليجرام بنجاح
-                        </span>
+                    <div class="result-details">
+                        <div class="detail-item">
+                            <span class="detail-label">الطلب:</span>
+                            <span class="detail-value">${order.order_id || 'غير محدد'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">المستلم:</span>
+                            <span class="detail-value">${order.receiver_name || 'غير محدد'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">الهاتف:</span>
+                            <span class="detail-value">${order.receiver_phone || 'غير محدد'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">المحافظة:</span>
+                            <span class="detail-value">${order.governorate || 'غير محدد'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">المبلغ:</span>
+                            <span class="detail-value">${order.net_amount || '0'} دينار</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">الوقت:</span>
+                            <span class="detail-value">${new Date().toLocaleString('ar-IQ')}</span>
+                        </div>
                     </div>
                 </div>
             `;
 
-            // إضافة النتيجة إلى أعلى القائمة
-            const container = elements.resultsContainer;
-            if (container.querySelector('.empty-state')) {
-                container.innerHTML = '';
+            if (el.resultsList.querySelector('.empty')) {
+                el.resultsList.innerHTML = '';
             }
-            container.insertBefore(resultElement, container.firstChild);
-
-            // حفظ النتيجة في المصفوفة
-            scanResults.unshift({
-                id: resultId,
-                orderData,
-                barcodeData,
-                timestamp: new Date()
-            });
-
-            // التمرير إلى النتيجة الجديدة - معطل للحفاظ على ثبات الكاميرا
-            // setTimeout(() => {
-            //     resultElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            // }, 100);
+            el.resultsList.insertAdjacentHTML('afterbegin', html);
         }
 
-        async function displayNotFoundResult(barcodeData) {
-            const resultId = `result-${Date.now()}`;
-            const resultElement = document.createElement('div');
-            resultElement.className = 'result-item';
-            resultElement.id = resultId;
-            
-            resultElement.innerHTML = `
-                <div class="result-header">
-                    <div class="result-id">باركود غير موجود: ${barcodeData}</div>
-                    <div class="result-status pending">❌ غير موجود</div>
-                </div>
-                <div class="result-details">
-                    <div class="detail-item">
-                        <span class="detail-label">الباركود الممسوح:</span>
-                        <span class="detail-value">${barcodeData}</span>
+        async function displayNotFound(barcode) {
+            const html = `
+                <div class="result-item">
+                    <div class="result-header">
+                        <div class="result-id">${barcode}</div>
+                        <span class="result-status failed">❌ غير موجود</span>
                     </div>
-                    <div class="detail-item">
-                        <span class="detail-label">وقت المسح:</span>
-                        <span class="detail-value">${new Date().toLocaleString('ar-IQ')}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">النتيجة:</span>
-                        <span class="detail-value">لم يتم العثور على هذا الطلب في النظام</span>
+                    <div class="result-details">
+                        <div class="detail-item">
+                            <span class="detail-value">لم يتم العثور على الطلب</span>
+                        </div>
                     </div>
                 </div>
             `;
-
-            // إضافة النتيجة إلى أعلى القائمة
-            const container = elements.resultsContainer;
-            if (container.querySelector('.empty-state')) {
-                container.innerHTML = '';
+            if (el.resultsList.querySelector('.empty')) {
+                el.resultsList.innerHTML = '';
             }
-            container.insertBefore(resultElement, container.firstChild);
-
-            // حفظ النتيجة في المصفوفة
-            scanResults.unshift({
-                id: resultId,
-                orderData: null,
-                barcodeData,
-                timestamp: new Date()
-            });
-
-            // التمرير إلى النتيجة الجديدة - معطل للحفاظ على ثبات الكاميرا
-            // setTimeout(() => {
-            //     resultElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            // }, 100);
+            el.resultsList.insertAdjacentHTML('afterbegin', html);
         }
 
-        async function sendToTelegram(orderData, barcodeData, capturedImage) {
+        async function sendTelegram(order, barcode, image) {
             try {
-                const now = new Date();
-                const dateStr = now.toLocaleDateString('ar-IQ');
-                const timeStr = now.toLocaleTimeString('ar-IQ');
-                
-                // تحديد الحالة مع الإيموجي المناسب
-                let statusText = '⚠️ غير مؤكد';
-                if (orderData.status === 'مؤكد' || orderData.auto_confirmed) {
-                    statusText = '✅ مؤكد';
-                } else if (orderData.status === 'قيد المعالجة') {
-                    statusText = '⚡ قيد المعالجة';
-                } else if (orderData.status === 'ملغي') {
-                    statusText = '❌ ملغي';
-                } else if (orderData.status === 'مسلم') {
-                    statusText = '📦 مسلم';
-                }
-                
-                // تنسيق الرسالة للكابشن
+                const status = order.status === 'مؤكد' || order.auto_confirmed ? '✅ مؤكد' : '⚠️ غير مؤكد';
                 const caption = `
 📊 تفاصيل الطلب:
-• رقم الوصل: ${orderData.wasl_number || 'غير محدد'}
-• رقم الطلب: ${orderData.order_id || 'غير محدد'}
-• المرسل: ${orderData.sender || 'غير محدد'}
-• اسم المستلم: ${orderData.receiver_name || 'غير محدد'}
-• هاتف المستلم: ${orderData.receiver_phone || 'غير محدد'}
-• منطقة المستلم: ${orderData.receiver_area || 'غير محدد'}
-• المحافظة: ${orderData.governorate || 'غير محدد'}
-• المبلغ الإجمالي: ${orderData.total_amount || 'غير محدد'} دينار
-• أجرة التوصيل: ${orderData.delivery_fee || 'غير محدد'} دينار
-• المبلغ الصافي: ${orderData.net_amount || 'غير محدد'} دينار
-• نوع التأكيد: ${orderData.auto_confirmed ? 'تأكيد تلقائي' : 'تأكيد يدوي'}
-• الحالة: ${statusText}
-• تاريخ التأكيد: ${orderData.confirmed_at || 'غير محدد'}
-• المصدر: ${orderData.source || 'غير محدد'}
-
-⏰ وقت المسح:
-• التاريخ: ${dateStr}
-• الوقت: ${timeStr}
-
-🔍 الباركود الممسوح: ${barcodeData}
-
-${orderData.governorate === 'كربلاء' ? '🚨 تنبيه: طلب كربلاء' : ''}
-${orderData.status === 'مؤكد' || orderData.auto_confirmed ? '🔄 تنبيه: طلب مؤكد مسبقاً' : ''}
+• رقم الوصل: ${order.wasl_number || 'غير محدد'}
+• رقم الطلب: ${order.order_id || 'غير محدد'}
+• المستلم: ${order.receiver_name || 'غير محدد'}
+• الهاتف: ${order.receiver_phone || 'غير محدد'}
+• المحافظة: ${order.governorate || 'غير محدد'}
+• المبلغ: ${order.net_amount || '0'} دينار
+• الحالة: ${status}
+🔍 الباركود: ${barcode}
+⏰ ${new Date().toLocaleString('ar-IQ')}
                 `.trim();
 
-                showTelegramStatus('📤 جاري إرسال البيانات والصورة للتيليجرام...');
-
-                // التحقق من وجود الصورة
-                if (!capturedImage) {
-                    throw new Error('لم يتم التقاط الصورة بشكل صحيح');
-                }
-
-                console.log('بدء تحويل الصورة إلى blob...');
-                
-                // تحويل data URL إلى blob بطريقة محسنة
-                const response = await fetch(capturedImage);
-                if (!response.ok) {
-                    throw new Error('فشل في تحويل الصورة إلى blob');
-                }
-                const blob = await response.blob();
-                
-                console.log('تم تحويل الصورة بنجاح، حجم الملف:', blob.size, 'bytes');
-                console.log('نوع الملف:', blob.type);
-
-                // التحقق من حجم الصورة (التليجرام يدعم حتى 10 ميجابايت)
-                if (blob.size > 10 * 1024 * 1024) {
-                    throw new Error('حجم الصورة كبير جداً');
-                }
-                
-                // إنشاء لوحة مفاتيح إنلاين مع رابط الطباعة
-                const keyboard = {
-                    inline_keyboard: [[
-                        {
-                            text: "🖨️ طباعة الطلب",
-                            url: `https://alkarar-exp.com/print_waslAll.php?wasl_id=${orderData.order_id}`
-                        }
-                    ]]
-                };
-                
+                const blob = await (await fetch(image)).blob();
                 const formData = new FormData();
                 formData.append('chat_id', TELEGRAM_CHAT_ID);
-                formData.append('photo', blob, 'barcode_scan.jpg');
+                formData.append('photo', blob, 'scan.jpg');
                 formData.append('caption', caption);
-                formData.append('reply_markup', JSON.stringify(keyboard));
+                formData.append('reply_markup', JSON.stringify({
+                    inline_keyboard: [[{
+                        text: '🖨️ طباعة',
+                        url: `https://alkarar-exp.com/print_waslAll.php?wasl_id=${order.order_id}`
+                    }]]
+                }));
 
-                console.log('بدء إرسال الطلب إلى التليجرام...');
-                const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendPhoto`;
-                const telegramResponse = await fetch(telegramUrl, {
+                const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendPhoto`, {
                     method: 'POST',
                     body: formData
                 });
 
-                console.log('استجابة التليجرام:', telegramResponse.status, telegramResponse.statusText);
-
-                if (telegramResponse.ok) {
-                    const result = await telegramResponse.json();
-                    console.log('تم إرسال الصورة بنجاح:', result);
-                    showTelegramStatus('✅ تم إرسال الصورة والبيانات للتيليجرام بنجاح');
-                } else {
-                    const errorData = await telegramResponse.text();
-                    console.error('خطأ من التليجرام:', errorData);
-                    throw new Error(`فشل في إرسال الرسالة: ${telegramResponse.status} - ${errorData}`);
-                }
-
+                if (!res.ok) throw new Error('فشل الإرسال');
+                showToast('✅ تم الإرسال');
             } catch (error) {
-                showTelegramStatus('❌ خطأ في إرسال البيانات للتيليجرام: ' + error.message);
-                
-                // في حالة فشل إرسال الصورة، إرسال النص فقط كبديل
-                try {
-                    const fallbackMessage = `
-📊 تفاصيل الطلب (نسخة احتياطية):
-• رقم الوصل: ${orderData.wasl_number || 'غير محدد'}
-• رقم الطلب: ${orderData.order_id || 'غير محدد'}
-• اسم المستلم: ${orderData.receiver_name || 'غير محدد'}
-• هاتف المستلم: ${orderData.receiver_phone || 'غير محدد'}
-• المحافظة: ${orderData.governorate || 'غير محدد'}
-• المبلغ الصافي: ${orderData.net_amount || 'غير محدد'} دينار
-• الحالة: ${orderData.status === 'مؤكد' || orderData.auto_confirmed ? '✅ مؤكد' : '⚠️ غير مؤكد'}
-🔍 الباركود: ${barcodeData}
-
-🖨️ رابط الطباعة: https://alkarar-exp.com/print_waslAll.php?wasl_id=${orderData.order_id}
-                    `.trim();
-
-                    const keyboard = {
-                        inline_keyboard: [[
-                            {
-                                text: "🖨️ طباعة الطلب",
-                                url: `https://alkarar-exp.com/print_waslAll.php?wasl_id=${orderData.order_id}`
-                            }
-                        ]]
-                    };
-
-                    const fallbackUrl = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
-                    await fetch(fallbackUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            chat_id: TELEGRAM_CHAT_ID,
-                            text: fallbackMessage,
-                            reply_markup: keyboard
-                        })
-                    });
-                    
-                    showTelegramStatus('✅ تم إرسال البيانات كنص احتياطي');
-                } catch (fallbackError) {
-                    showTelegramStatus('❌ فشل في إرسال البيانات نهائياً');
-                }
+                console.error('Telegram:', error);
             }
         }
 
-        function showTelegramStatus(message) {
-            elements.telegramStatus.textContent = message;
-            elements.telegramStatus.classList.add('show');
-            
-            setTimeout(() => {
-                elements.telegramStatus.classList.remove('show');
-            }, 4000);
-        }
+        function updateQueue() {
+            if (queue.length === 0) {
+                el.queueList.innerHTML = '<div class="empty"><i class="fas fa-clock"></i><p>لا توجد عناصر</p></div>';
+                return;
+            }
 
-        function updateStatus(message, type = 'info') {
-            const icons = {
-                info: 'fas fa-info-circle',
-                success: 'fas fa-check-circle',
-                warning: 'fas fa-exclamation-triangle',
-                error: 'fas fa-times-circle'
-            };
+            el.queueList.innerHTML = queue.map(item => {
+                const status = {
+                    pending: { text: 'انتظار', class: 'pending' },
+                    processing: { text: 'معالجة', class: 'processing' },
+                    completed: { text: 'مكتمل', class: 'completed' },
+                    failed: { text: 'فشل', class: 'failed' }
+                }[item.status];
 
-            elements.statusText.innerHTML = `<i class="${icons[type]}"></i> ${message}`;
-            elements.statusSection.className = `status-section ${type}`;
-        }
-
-        function showLoading(show) {
-            elements.loadingOverlay.classList.toggle('show', show);
+                return `
+                    <div class="queue-item ${item.status}">
+                        <div class="queue-info">
+                            <div class="queue-barcode">${item.barcode}</div>
+                            <div class="queue-time">${item.time.toLocaleTimeString('ar-IQ')}</div>
+                        </div>
+                        <div class="queue-status ${status.class}">${status.text}</div>
+                    </div>
+                `;
+            }).join('');
         }
 
         function updateStats() {
-            document.getElementById('scannedCount').textContent = stats.scanned;
-            document.getElementById('successCount').textContent = stats.success;
-            document.getElementById('errorCount').textContent = stats.error;
-            document.getElementById('pendingCount').textContent = stats.pending;
+            el.scannedCount.textContent = stats.scanned;
+            el.successCount.textContent = stats.success;
+            el.errorCount.textContent = stats.error;
+            el.pendingCount.textContent = stats.pending;
         }
 
-        // تأثير بصري عند نجاح المسح
-        function showScanSuccessEffect() {
-            const scanFrame = document.getElementById('scanFrame');
-            if (!scanFrame) return;
-            
-            scanFrame.classList.add('scan-success-effect');
-            setTimeout(() => {
-                scanFrame.classList.remove('scan-success-effect');
-            }, 300);
+        function updateStatus(text, type) {
+            el.status.className = `status ${type}`;
+            el.statusText.textContent = text;
         }
 
-        function playBeep() {
+        function showLoading(show) {
+            el.loading.classList.toggle('show', show);
+        }
+
+        function showToast(message) {
+            el.toast.textContent = message;
+            el.toast.classList.add('show');
+            setTimeout(() => el.toast.classList.remove('show'), 3000);
+        }
+
+        function vibrate(pattern) {
+            if (navigator.vibrate) navigator.vibrate(pattern);
+        }
+
+        function beep() {
             try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.value = 800;
-                oscillator.type = 'sine';
-                
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.2);
-            } catch (error) {
-                // تجاهل أخطاء الصوت
-            }
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 800;
+                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.2);
+            } catch (e) {}
         }
 
-        // إشعار صوتي للنجاح
-        function playSuccessSound() {
-            try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.value = 523; // نوتة C5
-                oscillator.type = 'sine';
-                
-                gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.3);
-            } catch (error) {
-                // تجاهل أخطاء الصوت
-            }
+        function clearResults() {
+            el.resultsList.innerHTML = '<div class="empty"><i class="fas fa-search"></i><p>لا توجد نتائج</p></div>';
         }
 
-        // إشعار صوتي للفشل
-        function playErrorSound() {
-            try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.value = 220; // نوتة A3
-                oscillator.type = 'sine';
-                
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.5);
-            } catch (error) {
-                // تجاهل أخطاء الصوت
-            }
-        }
-
-        // دالة عرض تنبيه الطلب المؤكد مسبقاً
-        function showConfirmedAlert() {
-            const alertBackdrop = document.getElementById('confirmedAlertBackdrop');
-            const alert = document.getElementById('confirmedAlert');
-            
-            alertBackdrop.classList.add('show');
-            alert.classList.add('show');
-            
-            updateStatus('🔄 تنبيه: طلب مؤكد مسبقاً - لم يتم الإرسال للتليجرام', 'warning');
-            
-            // إغلاق التنبيه تلقائياً بعد 4 ثواني
-            setTimeout(() => {
-                closeConfirmedAlert();
-            }, 4000);
-        }
-
-        // دالة إغلاق تنبيه الطلب المؤكد
-        function closeConfirmedAlert() {
-            const alertBackdrop = document.getElementById('confirmedAlertBackdrop');
-            const alert = document.getElementById('confirmedAlert');
-            
-            alertBackdrop.classList.remove('show');
-            alert.classList.remove('show');
-            
-            updateStatus('جاهز لمسح باركود جديد', 'info');
-        }
-
-        // دالة مسح جميع النتائج
-        function clearAllResults() {
-            elements.resultsContainer.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-search"></i>
-                    <h3>لا توجد نتائج بعد</h3>
-                    <p>ابدأ بمسح الباركود لعرض النتائج هنا</p>
-                </div>
-            `;
-            scanResults = [];
-            updateStatus('تم مسح جميع النتائج - جاهز للمسح', 'info');
-        }
-
-        // تحديث حالة نظام الطابور عند بدء/إيقاف المسح
-        function updateScanningState() {
-            if (isScanning) {
-                // بدء الطابور تلقائياً عند بدء المسح
-                if (!isProcessingQueue && processingQueue.length === 0) {
-                    updateStatus('المسح النشط - النظام جاهز لمعالجة الباركودات تلقائياً', 'success');
-                } else if (!isProcessingQueue) {
-                    startQueueProcessing();
-                }
-            } else {
-                // إيقاف الطابور عند إيقاف المسح
-                if (isProcessingQueue) {
-                    pauseQueueProcessing();
-                    updateStatus('تم إيقاف المسح والمعالجة التلقائية', 'info');
-                }
-            }
-        }
-
-        // معالجة أخطاء الكاميرا
-        window.addEventListener('error', (event) => {
-            if (event.message.includes('camera') || event.message.includes('video')) {
-                updateStatus('خطأ في الكاميرا - تأكد من الأذونات', 'error');
-                stats.error++;
-                updateStats();
-            }
-        });
-
-        // إيقاف المسح عند إغلاق الصفحة
+        // Cleanup
         window.addEventListener('beforeunload', () => {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-            }
-        });
-
-        // تحسين الأداء - إيقاف المسح عند عدم ظهور الصفحة
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden && isScanning) {
-                // إيقاف مؤقت للمسح عند إخفاء الصفحة
-                video.pause();
-            } else if (!document.hidden && isScanning) {
-                // استئناف المسح عند العودة للصفحة
-                video.play();
-            }
+            if (stream) stream.getTracks().forEach(t => t.stop());
         });
     </script>
 </body>
