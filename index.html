@@ -671,8 +671,48 @@
                 
                 if (cameras.length === 0) throw new Error('لا توجد كاميرا');
                 if (cameras.length === 1) el.cameraBtn.style.display = 'none';
+                
+                // البحث عن الكاميرا الخلفية ووضعها أولاً
+                await findBackCamera();
             } catch (error) {
                 throw new Error('خطأ في الوصول للكاميرا');
+            }
+        }
+
+        async function findBackCamera() {
+            // محاولة استخدام الكاميرا الخلفية مباشرة
+            try {
+                const backStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+                });
+                const backTrack = backStream.getVideoTracks()[0];
+                const backSettings = backTrack.getSettings();
+                
+                // البحث عن الكاميرا الخلفية في القائمة
+                const backCameraIndex = cameras.findIndex(cam => {
+                    if (backSettings.deviceId && cam.deviceId === backSettings.deviceId) {
+                        return true;
+                    }
+                    // محاولة التعرف على الكاميرا الخلفية من الاسم
+                    const label = cam.label?.toLowerCase() || '';
+                    return label.includes('back') || label.includes('rear') || 
+                           label.includes('environment') || label.includes('خلفي');
+                });
+                
+                backStream.getTracks().forEach(t => t.stop());
+                
+                // إذا وجدنا الكاميرا الخلفية، نضعها في المقدمة
+                if (backCameraIndex > 0) {
+                    const backCamera = cameras.splice(backCameraIndex, 1)[0];
+                    cameras.unshift(backCamera);
+                    currentCamera = 0;
+                } else if (backCameraIndex === -1) {
+                    // إذا لم نجدها، نستخدم facingMode مباشرة
+                    currentCamera = 0;
+                }
+            } catch (error) {
+                // في حالة الفشل، نستخدم الكاميرا الأولى
+                currentCamera = 0;
             }
         }
 
@@ -686,19 +726,33 @@
         async function startScanning() {
             try {
                 showLoading(true);
-                const constraints = {
+                
+                // محاولة استخدام الكاميرا الخلفية أولاً
+                let constraints = {
                     video: {
-                        deviceId: cameras[currentCamera]?.deviceId,
-                        facingMode: currentCamera === 0 ? 'environment' : 'user',
+                        facingMode: 'environment', // الكاميرا الخلفية افتراضياً
                         width: { ideal: 1280 },
                         height: { ideal: 720 }
                     }
                 };
 
+                // إذا كان هناك deviceId محدد، نستخدمه
+                if (cameras[currentCamera]?.deviceId) {
+                    constraints.video.deviceId = { exact: cameras[currentCamera].deviceId };
+                }
+
                 try {
                     stream = await navigator.mediaDevices.getUserMedia(constraints);
                 } catch (e) {
-                    stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    // في حالة الفشل، نستخدم facingMode فقط
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({
+                            video: { facingMode: 'environment' }
+                        });
+                    } catch (e2) {
+                        // آخر محاولة بدون قيود
+                        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    }
                 }
 
                 el.video.srcObject = stream;
@@ -750,8 +804,50 @@
             try {
                 showLoading(true);
                 if (stream) stream.getTracks().forEach(t => t.stop());
+                
+                // التبديل بين الكاميرات
                 currentCamera = (currentCamera + 1) % cameras.length;
-                await startScanning();
+                
+                // تحديد facingMode بناءً على الكاميرا المختارة
+                const isBackCamera = currentCamera === 0;
+                const constraints = {
+                    video: {
+                        deviceId: cameras[currentCamera]?.deviceId,
+                        facingMode: isBackCamera ? 'environment' : 'user',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
+
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia(constraints);
+                } catch (e) {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: isBackCamera ? 'environment' : 'user' }
+                    });
+                }
+
+                el.video.srcObject = stream;
+                await new Promise((resolve, reject) => {
+                    el.video.onloadedmetadata = () => {
+                        el.video.play().then(() => {
+                            el.canvas.width = el.video.videoWidth;
+                            el.canvas.height = el.video.videoHeight;
+                            resolve();
+                        }).catch(reject);
+                    };
+                    setTimeout(() => reject(new Error('انتهت المهلة')), 10000);
+                });
+
+                const track = stream.getVideoTracks()[0];
+                if (track?.getCapabilities?.().torch) {
+                    el.flashBtn.disabled = false;
+                } else {
+                    el.flashBtn.disabled = true;
+                }
+
+                showLoading(false);
+                updateStatus(`تم التبديل إلى الكاميرا ${isBackCamera ? 'الخلفية' : 'الأمامية'}`, 'success');
             } catch (error) {
                 showLoading(false);
                 updateStatus('خطأ في تبديل الكاميرا', 'error');
